@@ -28,19 +28,19 @@ class ConnectivityBanner extends StatelessWidget {
         return Container(
           width: double.infinity,
           color: color,
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_off, size: 14, color: Colors.white),
-              const SizedBox(width: 6),
+              const Icon(Icons.wifi_off_outlined,
+                  size: 12, color: Colors.white),
+              const SizedBox(width: 5),
               Text(
                 status.label,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

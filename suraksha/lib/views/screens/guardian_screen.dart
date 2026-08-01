@@ -34,8 +34,6 @@ class _GuardianScreenState extends State<GuardianScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guardian Mode'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),
@@ -102,14 +100,16 @@ class _GuardianScreenState extends State<GuardianScreen> {
                               point:
                                   const LatLng(_demoLat, _demoLng),
                               child: Container(
+                                width: 32,
+                                height: 32,
                                 decoration: BoxDecoration(
                                   color: AppColors.primary,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                       color: Colors.white, width: 2),
                                 ),
-                                child: const Icon(Icons.person,
-                                    color: Colors.white, size: 18),
+                                child: const Icon(Icons.person_outline,
+                                    color: Colors.white, size: 16),
                               ),
                             ),
                           ],
@@ -137,21 +137,21 @@ class _GuardianInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.shield_outlined,
-                color: AppColors.primary),
+                color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -219,18 +219,19 @@ class _TrackingCard extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: vm.isGuardianConfigured ? onShareLocation : null,
-            icon: const Icon(Icons.location_on),
+            icon: const Icon(Icons.location_on_outlined, size: 16),
             label: const Text('Share Location with Guardian'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -241,23 +242,24 @@ class _TrackingCard extends StatelessWidget {
                       const SnackBar(
                         content: Text(
                             'Please set a guardian in Settings first.'),
-                        backgroundColor: AppColors.warningAmber,
-                        duration: Duration(seconds: 3),
                       ),
                     );
                   },
-            icon: const Icon(Icons.sos),
+            icon: const Icon(Icons.sos_outlined, size: 16),
             label: Text(vm.isGuardianConfigured
                 ? 'SOS — Alert Guardian'
                 : 'SOS — Set Guardian First'),
             style: ElevatedButton.styleFrom(
               backgroundColor: vm.isGuardianConfigured
                   ? AppColors.dangerRed
-                  : Colors.grey[400],
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+                  : AppColors.border,
+              foregroundColor: vm.isGuardianConfigured
+                  ? Colors.white
+                  : AppColors.subtitle,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ),
@@ -283,14 +285,10 @@ class _SmsInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: smsSent
-            ? AppColors.safeGreen.withValues(alpha: 0.1)
-            : Colors.grey[100],
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: smsSent
-                ? AppColors.safeGreen
-                : Colors.grey[300]!),
+            color: smsSent ? AppColors.safeGreen : AppColors.border),
       ),
       child: Row(
         children: [
@@ -341,8 +339,6 @@ class _GuardianWatchScreenState extends State<GuardianWatchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Watching Location'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),

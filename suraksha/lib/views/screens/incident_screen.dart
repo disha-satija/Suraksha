@@ -28,8 +28,6 @@ class IncidentScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Report Incident'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),
@@ -53,18 +51,20 @@ class IncidentScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on,
-                          color: AppColors.primary, size: 18),
+                      const Icon(Icons.location_on_outlined,
+                          color: AppColors.primary, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'Lat: ${latitude.toStringAsFixed(4)}, '
                         'Lng: ${longitude.toStringAsFixed(4)}',
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                            fontSize: 13, color: AppColors.subtitle),
                       ),
                     ],
                   ),
@@ -156,22 +156,21 @@ class IncidentScreen extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: vm.isSubmitting
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: 18, height: 18,
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2),
                           )
-                        : const Text(
-                            'Submit Report',
+                        : const Text('Submit Report',
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -214,12 +213,14 @@ class _SuccessView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                elevation: 0,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 14),
+                    horizontal: 28, vertical: 12),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Done'),
+              child: const Text('Done',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         ),

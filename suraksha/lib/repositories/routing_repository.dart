@@ -38,8 +38,26 @@ class RoutingRepository {
     }
 
     final cached = _routingService.findNearestCachedRoute(start, end);
-    if (cached != null) return cached.alternatives;
-    return [];
+    if (cached == null) return [];
+
+    // Compute real XAI from the actual safety grid for every cached alternative
+    return cached.alternatives.map((route) {
+      final xai = _routingService.buildExplanationForRoute(
+        route.polyline,
+        grid,
+        route.safetyScore,
+      );
+      return RouteModel(
+        id: route.id,
+        polyline: route.polyline,
+        distanceMeters: route.distanceMeters,
+        durationSeconds: route.durationSeconds,
+        safetyScore: route.safetyScore,
+        riskLevel: route.riskLevel,
+        isCached: route.isCached,
+        explanation: xai,
+      );
+    }).toList();
   }
 
   bool hasDeviated(LatLng currentPosition, List<LatLng> plannedPolyline) {

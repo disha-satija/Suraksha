@@ -1,0 +1,311 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
+import '../models/safe_spot.dart';
+import '../services/groq_service.dart';
+
+enum LocationState { idle, requesting, granted, denied, searching }
+
+// Simple suggestion result from Nominatim
+class LocationSuggestion {
+  final String label;
+  final double lat;
+  final double lng;
+  const LocationSuggestion(
+      {required this.label, required this.lat, required this.lng});
+}
+
+class SafeSpotViewModel extends ChangeNotifier {
+  final GroqService _groq;
+
+  SafeSpotViewModel({required GroqService groq}) : _groq = groq;
+
+  // ── State ─────────────────────────────────────────────────────────────────
+
+  LocationState _locationState = LocationState.idle;
+  LatLng? _currentLocation;
+  String _locationLabel = '';
+  String _searchQuery = '';
+
+  List<SafeSpot> _safeSpots = [];
+  SafeSpot? _selectedSpot;
+  bool _isLoading = false;
+  String? _error;
+  int _lastRadiusKm = 5;
+
+  // Search suggestions
+  List<LocationSuggestion> _searchSuggestions = [];
+  bool _isSuggestionsLoading = false;
+  Timer? _debounce;
+
+  LocationState get locationState => _locationState;
+  LatLng? get currentLocation => _currentLocation;
+  String get locationLabel => _locationLabel;
+  String get searchQuery => _searchQuery;
+  List<SafeSpot> get safeSpots => _safeSpots;
+  SafeSpot? get selectedSpot => _selectedSpot;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  int get lastRadiusKm => _lastRadiusKm;
+  bool get hasLocation => _currentLocation != null;
+  List<LocationSuggestion> get searchSuggestions => _searchSuggestions;
+  bool get isSuggestionsLoading => _isSuggestionsLoading;
+
+  SafeSpot? get nearestSpot =>
+      _safeSpots.isEmpty
+          ? null
+          : _safeSpots.reduce(
+              (a, b) => a.distanceKm <= b.distanceKm ? a : b);
+
+  // ── Search suggestion typing handler ─────────────────────────────────────
+
+  void updateSearchQuery(String query) {
+    _searchQuery = query;
+    _debounce?.cancel();
+    if (query.trim().length < 2) {
+      _searchSuggestions = [];
+      _isSuggestionsLoading = false;
+      notifyListeners();
+      return;
+    }
+    _isSuggestionsLoading = true;
+    notifyListeners();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _fetchSuggestions(query.trim());
+    });
+  }
+
+  Future<void> _fetchSuggestions(String query) async {
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search'
+        '?q=${Uri.encodeComponent(query)}'
+        '&format=json&limit=6&addressdetails=0',
+      );
+      final res = await http
+          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
+          .timeout(const Duration(seconds: 6));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as List;
+        _searchSuggestions = data
+            .map((e) => LocationSuggestion(
+                  label: e['display_name'] as String,
+                  lat: double.parse(e['lat'] as String),
+                  lng: double.parse(e['lon'] as String),
+                ))
+            .toList();
+      }
+    } catch (_) {
+      _searchSuggestions = [];
+    } finally {
+      _isSuggestionsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  // ── GPS flow ──────────────────────────────────────────────────────────────  /// Called on screen init — tries GPS first, emits state changes throughout.
+  Future<void> initLocation() async {
+    _locationState = LocationState.requesting;
+    _error = null;
+    notifyListeners();
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _locationState = LocationState.denied;
+        notifyListeners();
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _locationState = LocationState.denied;
+        notifyListeners();
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      _currentLocation = LatLng(pos.latitude, pos.longitude);
+      _locationState = LocationState.granted;
+
+      // Reverse-geocode to get a human-readable label
+      _locationLabel = await _reverseGeocode(pos.latitude, pos.longitude);
+      notifyListeners();
+
+      // Auto-fetch safe spots once we have location
+      await fetchSafeSpots();
+    } catch (e) {
+      _locationState = LocationState.denied;
+      _error = 'Could not get location. Use the search bar to set your position.';
+      notifyListeners();
+    }
+  }
+
+  // ── Search bar flow ───────────────────────────────────────────────────────
+
+  /// Called when user submits the location search bar.
+  Future<void> searchLocation(String query) async {
+    if (query.trim().isEmpty) return;
+
+    _searchQuery = query.trim();
+    _isLoading = true;
+    _error = null;
+    _locationState = LocationState.searching;
+    notifyListeners();
+
+    try {
+      final coords = await _geocode(query);
+      if (coords == null) {
+        _error = 'Location not found. Try a more specific name.';
+        _isLoading = false;
+        _locationState = LocationState.idle;
+        notifyListeners();
+        return;
+      }
+
+      _currentLocation = coords;
+      _locationLabel = query;
+      _locationState = LocationState.granted;
+      notifyListeners();
+
+      await fetchSafeSpots();
+    } catch (e) {
+      _error = 'Search failed: $e';
+      _isLoading = false;
+      _locationState = LocationState.idle;
+      notifyListeners();
+    }
+  }
+
+  /// Directly set location from an external coordinate (e.g. map tap).
+  Future<void> setLocationFromCoords(LatLng coords, {String? label}) async {
+    _currentLocation = coords;
+    _locationLabel = label ?? await _reverseGeocode(coords.latitude, coords.longitude);
+    _locationState = LocationState.granted;
+    _error = null;
+    notifyListeners();
+    await fetchSafeSpots();
+  }
+
+  // ── Safe spot fetch ───────────────────────────────────────────────────────
+
+  Future<void> fetchSafeSpots({int radiusKm = 5}) async {
+    if (_currentLocation == null) return;
+
+    _isLoading = true;
+    _error = null;
+    _lastRadiusKm = radiusKm;
+    notifyListeners();
+
+    try {
+      _safeSpots = await _groq.findSafeSpots(
+        lat: _currentLocation!.latitude,
+        lng: _currentLocation!.longitude,
+        locationLabel: _locationLabel.isNotEmpty ? _locationLabel : 'current location',
+        radiusKm: radiusKm,
+        maxResults: 8,
+      );
+      _error = null;
+    } catch (e) {
+      _error = 'Could not load safe spots: $e';
+      _safeSpots = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Selection ─────────────────────────────────────────────────────────────
+
+  void selectSpot(SafeSpot spot) {
+    _selectedSpot = spot;
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    _selectedSpot = null;
+    notifyListeners();
+  }
+
+  void clearSpots() {
+    _safeSpots = [];
+    _selectedSpot = null;
+    _searchSuggestions = [];
+    notifyListeners();
+  }
+
+  // ── Geocoding helpers ─────────────────────────────────────────────────────
+
+  Future<LatLng?> _geocode(String query) async {
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search'
+        '?q=${Uri.encodeComponent(query)}'
+        '&format=json&limit=1',
+      );
+      final res = await http
+          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as List;
+        if (data.isNotEmpty) {
+          return LatLng(
+            double.parse(data.first['lat'] as String),
+            double.parse(data.first['lon'] as String),
+          );
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<String> _reverseGeocode(double lat, double lng) async {
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse'
+        '?lat=$lat&lon=$lng&format=json',
+      );
+      final res = await http
+          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
+          .timeout(const Duration(seconds: 6));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final address = data['address'] as Map<String, dynamic>? ?? {};
+        // Build a short human-readable label
+        final parts = <String>[
+          if (address['suburb'] != null) address['suburb'] as String,
+          if (address['city'] != null)
+            address['city'] as String
+          else if (address['town'] != null)
+            address['town'] as String,
+        ];
+        if (parts.isNotEmpty) return parts.join(', ');
+        return data['display_name'] as String? ?? 'Current Location';
+      }
+    } catch (_) {}
+    return 'Current Location';
+  }
+}

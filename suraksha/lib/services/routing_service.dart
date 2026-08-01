@@ -75,6 +75,11 @@ class RoutingService {
     });
   }
 
+  // ── Public helper — compute XAI for any polyline + grid ─────────────────
+  RouteExplanation buildExplanationForRoute(
+          List<LatLng> polyline, List<SafetyGridEntry> grid, double score) =>
+      _buildExplanation(polyline, grid, score);
+
   // ── Route deviation detection ────────────────────────────────────────────
 
   /// Returns true if current position deviates more than [thresholdMeters]
@@ -198,6 +203,9 @@ class RoutingService {
   }
 
   DemoRoute _parseDemoRoute(Map<String, dynamic> json) {
+    // Pre-parse the grid entries from the polyline points — done later in
+    // getRoutes when the grid is available. Store the raw polyline for now
+    // and compute XAI in fetchOnlineRoutes / getRoutes.
     final alts = (json['alternatives'] as List<dynamic>).map((a) {
       final coords = (a['polyline'] as List<dynamic>)
           .map((c) => LatLng(
@@ -205,23 +213,18 @@ class RoutingService {
                 (c['lng'] as num).toDouble(),
               ))
           .toList();
+      final safetyScore = (a['safety_score'] as num).toDouble();
+      // Explanation will be filled in once we have the grid (see getRoutes).
+      // For now store a placeholder — replaced before the route is returned.
       return RouteModel(
         id: a['id'] as String,
         polyline: coords,
         distanceMeters: (a['distance_meters'] as num).toDouble(),
         durationSeconds: (a['duration_seconds'] as num).toDouble(),
-        safetyScore: (a['safety_score'] as num).toDouble(),
+        safetyScore: safetyScore,
         riskLevel: a['risk_level'] as String,
         isCached: true,
-        explanation: RouteExplanation(
-          avgLighting: 5.5,
-          avgPoliceDist: 3.2,
-          avgCrowd: 450,
-          avgCrimeCount: 22,
-          summaryText:
-              'Pre-cached demo route. Score: ${((a['safety_score'] as num).toDouble() * 100).toStringAsFixed(0)}/100.',
-          tips: [],
-        ),
+        explanation: null, // computed in getRoutes
       );
     }).toList();
 
