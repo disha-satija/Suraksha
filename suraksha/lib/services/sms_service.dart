@@ -22,7 +22,7 @@ class SmsService {
 
     final greeting = recipientName != null ? 'Hi $recipientName, ' : '';
     final message =
-        '🚨 SOS Alert! ${greeting}$senderName needs immediate help! '
+        '🚨 SOS Alert! $greeting$senderName needs immediate help! '
         'Current location: $mapsLink '
         '(Lat: ${latitude.toStringAsFixed(6)}, Lng: ${longitude.toStringAsFixed(6)}) '
         '— Sent via Suraksha';

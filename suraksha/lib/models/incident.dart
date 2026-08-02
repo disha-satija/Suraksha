@@ -47,13 +47,13 @@ class Incident {
   }
 
   Map<String, dynamic> toSupabaseJson() => {
-        'local_id': localId,
+        'clientEventId': localId,
         'latitude': latitude,
         'longitude': longitude,
-        'crime_type': crimeType,
+        'crimeType': crimeType,
         'description': description,
-        'time_of_day': timeOfDay,
-        'reported_at': reportedAt.toIso8601String(),
+        'timeOfDay': timeOfDay,
+        'reportedAt': reportedAt.toUtc().toIso8601String(),
       };
 
   static const List<String> crimeTypes = [

@@ -32,4 +32,19 @@ class SettingsService {
   Future<void> saveUserName(String name) async {
     await _prefs.setString(AppConstants.prefUserName, name);
   }
+
+  String? get guardianId => _prefs.getString(AppConstants.prefGuardianId);
+  String? get sharingSessionId => _prefs.getString(AppConstants.prefSharingSessionId);
+  String? get shareToken => _prefs.getString(AppConstants.prefShareToken);
+
+  Future<void> saveGuardianBackendState({String? guardianId, String? sessionId, String? shareToken}) async {
+    if (guardianId != null) await _prefs.setString(AppConstants.prefGuardianId, guardianId);
+    if (sessionId != null) await _prefs.setString(AppConstants.prefSharingSessionId, sessionId);
+    if (shareToken != null) await _prefs.setString(AppConstants.prefShareToken, shareToken);
+  }
+
+  Future<void> clearSharingSession() async {
+    await _prefs.remove(AppConstants.prefSharingSessionId);
+    await _prefs.remove(AppConstants.prefShareToken);
+  }
 }

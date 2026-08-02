@@ -118,8 +118,8 @@ class IncidentScreen extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Offline note
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.info_outline, size: 14, color: Colors.grey),
                     SizedBox(width: 6),
                     Expanded(

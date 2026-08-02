@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/guardian.dart';
 import '../repositories/guardian_repository.dart';
 
@@ -49,10 +50,34 @@ class GuardianViewModel extends ChangeNotifier {
 
   // ── Location sharing ──────────────────────────────────────────────────────
 
+  Future<void> updateCurrentLocation({bool triggerSms = false}) async {
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) throw StateError('Location services are disabled');
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        throw StateError('Location permission was not granted');
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 10)),
+      );
+      await updateLocation(
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracyM: position.accuracy,
+        triggerSms: triggerSms,
+      );
+    } catch (e) {
+      _error = 'Could not get current location: $e';
+      notifyListeners();
+    }
+  }
+
   Future<void> updateLocation({
-    required String userId,
     required double lat,
     required double lng,
+    double? accuracyM,
     bool triggerSms = false,
   }) async {
     _lastKnownLocation = LatLng(lat, lng);
@@ -61,9 +86,9 @@ class GuardianViewModel extends ChangeNotifier {
 
     try {
       await _guardianRepo.updateLocation(
-        userId: userId,
         lat: lat,
         lng: lng,
+        accuracyM: accuracyM,
         triggerSmsFallback: triggerSms,
       );
 
@@ -90,10 +115,10 @@ class GuardianViewModel extends ChangeNotifier {
   }
 
   /// Guardian's view — subscribe to Realtime stream for tracked user.
-  void subscribeToGuardianStream(String trackedUserId) {
+  void subscribeToGuardianStream(String shareToken) {
     _locationStreamSub?.cancel();
     _locationStreamSub = _guardianRepo
-        .guardianLocationStream(trackedUserId)
+        .guardianLocationStream(shareToken)
         .listen((data) {
       if (data.containsKey('latitude') && data.containsKey('longitude')) {
         _guardianTrackedLocation = LatLng(
@@ -105,8 +130,8 @@ class GuardianViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> syncOnRestore(String userId) async {
-    await _guardianRepo.syncOnConnectivityRestore(userId);
+  Future<void> syncOnRestore() async {
+    await _guardianRepo.syncOnConnectivityRestore();
   }
 
   void clearSmsFlag() {

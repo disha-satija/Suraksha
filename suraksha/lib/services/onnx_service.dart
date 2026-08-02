@@ -120,7 +120,9 @@ class OnnxService {
         rawScore = (outputData.first as num).toDouble();
       }
     }
-    for (final o in outputs) o?.release();
+    for (final o in outputs) {
+      o?.release();
+    }
     final score = rawScore.clamp(0.0, 1.0);
 
     // ── Build XAI contributions ──────────────────────────────────────────────

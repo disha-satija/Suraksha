@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:latlong2/latlong.dart';
 
-/// Category of a real-world safe spot returned by Groq.
+/// Category of a verified real-world safe spot returned by the backend.
 enum SafeSpotCategory {
   policeStation,
   hospital,
@@ -71,7 +71,7 @@ extension SafeSpotCategoryX on SafeSpotCategory {
   }
 }
 
-/// A real-world safe location surfaced by Groq for a given centre point.
+/// A real-world safe location returned by the backend for a given centre point.
 class SafeSpot {
   final String id;
   final String name;
@@ -118,8 +118,8 @@ class SafeSpot {
     final category = SafeSpotCategoryX.fromString(categoryStr);
 
     // Always recompute haversine distance from real coordinates —
-    // never trust Groq's distance_km value since it's often inaccurate
-    // or computed relative to a different reference point.
+    // Recompute distance from the returned coordinates rather than trusting
+    // a provider's derived value.
     final distKm = (originLat != 0 || originLng != 0)
         ? _haversine(originLat, originLng, lat, lng)
         : (json['distance_km'] as num?)?.toDouble() ?? 0.0;

@@ -1,14 +1,13 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/routing_viewmodel.dart';
 import '../../viewmodels/map_viewmodel.dart';
 import '../../models/route_model.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/api_client.dart';
 import '../widgets/connectivity_banner.dart';
 
 // ── Data class for a location suggestion ──────────────────────────────────────
@@ -45,7 +44,7 @@ class _RoutingScreenState extends State<RoutingScreen> {
   List<_LocationSuggestion> _suggestions = [];
   bool _searchingFrom = true;
   bool _loadingSuggestions = false;
-  bool _mapExpanded = true; // controls minimize/maximize
+  final ApiClient _api = ApiClient();
 
   @override
   void dispose() {
@@ -83,27 +82,18 @@ class _RoutingScreenState extends State<RoutingScreen> {
       }
     }
 
-    // 2. Nominatim geocoding (online only)
+    // 2. Backend geocoding (online only)
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search'
-        '?q=${Uri.encodeComponent('$query, India')}'
-        '&format=json&limit=4&countrycodes=in',
-      );
-      final response = await http
-          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
-          .timeout(const Duration(seconds: 4));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        for (final item in data) {
-          results.add(_LocationSuggestion(
-            label: item['display_name'] as String,
-            lat: double.parse(item['lat'] as String),
-            lng: double.parse(item['lon'] as String),
-            isGridEntry: false,
-          ));
-        }
+      final payload = await _api.get('/geocode/search', query: {'q': '$query, India', 'limit': 4});
+      final data = payload['data'] as List<dynamic>? ?? [];
+      for (final raw in data) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        results.add(_LocationSuggestion(
+          label: item['label'] as String,
+          lat: (item['lat'] as num).toDouble(),
+          lng: (item['lng'] as num).toDouble(),
+          isGridEntry: false,
+        ));
       }
     } catch (_) {
       // Offline or timed out — local results only
@@ -323,47 +313,6 @@ class _RoutingScreenState extends State<RoutingScreen> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _MapToggleBar extends StatelessWidget {
-  final bool isExpanded;
-  final VoidCallback onToggle;
-
-  const _MapToggleBar({required this.isExpanded, required this.onToggle});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: Container(
-        width: double.infinity,
-        color: Colors.grey[100],
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isExpanded
-                  ? Icons.keyboard_arrow_down
-                  : Icons.keyboard_arrow_up,
-              size: 18,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              isExpanded ? 'Minimise map' : 'Expand map',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -918,7 +867,7 @@ class _RouteXaiSheet extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            '${(route.safetyScore * 100).toStringAsFixed(0)}',
+                            (route.safetyScore * 100).toStringAsFixed(0),
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,

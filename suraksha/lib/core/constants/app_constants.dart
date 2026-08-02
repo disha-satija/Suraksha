@@ -1,11 +1,15 @@
 /// Central place for all app-wide constants.
-/// Supabase keys are placeholders — fill in before running.
 class AppConstants {
   AppConstants._();
 
-  // ── Supabase ──────────────────────────────────────────────────────────────
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  // ── Runtime configuration ────────────────────────────────────────────────
+  // Pass these with --dart-define. No service credential belongs in the app.
+  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const String apiBaseUrl = String.fromEnvironment(
+    'SURAKSHA_API_URL',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
+  );
 
   // ── Asset paths ───────────────────────────────────────────────────────────
   static const String onnxModelPath = 'assets/model/safety_model.onnx';
@@ -28,8 +32,6 @@ class AppConstants {
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   // ── Routing ───────────────────────────────────────────────────────────────
-  static const String osrmBaseUrl =
-      'https://router.project-osrm.org/route/v1/driving';
 
   // ── Safety score thresholds ───────────────────────────────────────────────
   static const double safetyHighThreshold = 0.75;
@@ -42,4 +44,7 @@ class AppConstants {
   static const String prefGuardianName = 'guardian_name';
   static const String prefGuardianPhone = 'guardian_phone';
   static const String prefUserName = 'user_name';
+  static const String prefGuardianId = 'guardian_id';
+  static const String prefSharingSessionId = 'sharing_session_id';
+  static const String prefShareToken = 'share_token';
 }

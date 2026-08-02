@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../models/guardian.dart';
 import '../services/database_service.dart';
 import '../services/supabase_service.dart';
@@ -5,7 +6,7 @@ import '../services/connectivity_service.dart';
 import '../services/settings_service.dart';
 import '../services/sms_service.dart';
 
-/// Manages guardian mode — location sharing, offline queue, SMS fallback.
+/// Manages guardian contacts, secure sharing sessions, location sync, and SOS.
 class GuardianRepository {
   final AppDatabase _db;
   final SupabaseService _supabase;
@@ -27,44 +28,96 @@ class GuardianRepository {
 
   Guardian getGuardian() => _settings.getGuardian();
 
-  Future<void> saveGuardian(Guardian guardian) =>
-      _settings.saveGuardian(guardian);
+  Future<void> saveGuardian(Guardian guardian) async {
+    await _settings.saveGuardian(guardian);
+    if (!SupabaseService.isInitialized || !guardian.isConfigured) return;
+    final body = {
+      'name': guardian.name,
+      'phone': guardian.phone,
+    };
+    final guardians = await _supabase.getGuardians();
+    final existing = guardians.whereType<Map>().cast<Map<String, dynamic>>().where(
+      (item) => item['phone'] == guardian.phone,
+    ).toList();
+    final created = existing.isNotEmpty
+        ? await _supabase.updateGuardian(existing.first['id'] as String, body)
+        : await _supabase.createGuardian(body);
+    final data = created['data'] as Map<String, dynamic>?;
+    if (data?['id'] is String) await _settings.saveGuardianBackendState(guardianId: data!['id'] as String);
+  }
 
-  /// Called with the user's current GPS location.
-  /// Online → push to Supabase AND send SMS if triggerSmsFallback is true.
-  /// Offline → queue locally and send SMS if triggerSmsFallback is true.
+  Future<String?> _ensureSharingSession() async {
+    final existing = _settings.sharingSessionId;
+    if (existing != null && existing.isNotEmpty) return existing;
+    if (!SupabaseService.isInitialized) return null;
+
+    String? guardianId = _settings.guardianId;
+    if (guardianId == null) {
+      final guardians = await _supabase.getGuardians();
+      final local = getGuardian();
+      final matching = guardians.whereType<Map>().cast<Map<String, dynamic>>().where(
+        (item) => item['phone'] == local.phone,
+      ).toList();
+      if (matching.isNotEmpty) {
+        guardianId = matching.first['id'] as String?;
+      } else if (local.isConfigured) {
+        final created = await _supabase.createGuardian({'name': local.name, 'phone': local.phone});
+        guardianId = (created['data'] as Map<String, dynamic>?)?['id'] as String?;
+      }
+      if (guardianId != null) await _settings.saveGuardianBackendState(guardianId: guardianId);
+    }
+    if (guardianId == null) return null;
+
+    final created = await _supabase.createSharingSession(guardianId: guardianId);
+    final data = created['data'] as Map<String, dynamic>?;
+    final session = data?['session'] as Map<String, dynamic>?;
+    final sessionId = session?['id'] as String?;
+    final shareToken = data?['shareToken'] as String?;
+    if (sessionId == null) return null;
+    await _settings.saveGuardianBackendState(sessionId: sessionId, shareToken: shareToken);
+    return sessionId;
+  }
+
   Future<void> updateLocation({
-    required String userId,
     required double lat,
     required double lng,
+    double? accuracyM,
     bool triggerSmsFallback = false,
   }) async {
+    final now = DateTime.now();
+    final localId = '${now.microsecondsSinceEpoch}_${lat}_$lng';
     final update = LocationUpdate(
-      localId: DateTime.now().millisecondsSinceEpoch.toString(),
+      localId: localId,
       latitude: lat,
       longitude: lng,
-      timestamp: DateTime.now(),
-      isSynced: _connectivity.isOnline,
+      timestamp: now,
+      isSynced: false,
     );
-
-    // Always queue locally first
     await _db.insertLocationUpdate(update);
 
-    // Try Supabase sync if online
-    if (_connectivity.isOnline) {
+    var backendDelivered = false;
+    if (_connectivity.isOnline && SupabaseService.isInitialized) {
       try {
-        await _supabase.updateUserLocation(
-          userId: userId,
-          lat: lat,
-          lng: lng,
-        );
+        final sessionId = await _ensureSharingSession();
+        if (sessionId != null) {
+          await _supabase.updateUserLocation(
+            sessionId: sessionId,
+            lat: lat,
+            lng: lng,
+            clientEventId: localId,
+            recordedAt: now,
+            accuracyM: accuracyM,
+          );
+          if (triggerSmsFallback) await _supabase.triggerSos(lat: lat, lng: lng, clientEventId: localId, sessionId: sessionId);
+          await _db.markLocationSynced(localId);
+          backendDelivered = true;
+        }
       } catch (_) {
-        // Supabase failed — location already queued locally
+        // Keep the local outbox and use native SMS as a last-resort SOS path.
       }
     }
 
-    // SMS alert fires regardless of connectivity whenever SOS is triggered
-    if (triggerSmsFallback) {
+    if (triggerSmsFallback && !backendDelivered) {
       final guardian = getGuardian();
       if (guardian.isConfigured) {
         await _sms.sendGuardianAlert(
@@ -78,32 +131,29 @@ class GuardianRepository {
     }
   }
 
-  /// Flush location queue to Supabase when connectivity restores.
-  Future<void> syncOnConnectivityRestore(String userId) async {
+  Future<void> syncOnConnectivityRestore() async {
+    final sessionId = _settings.sharingSessionId;
+    if (sessionId == null || sessionId.isEmpty) return;
     final pending = await _db.getUnsyncedLocations();
     if (pending.isEmpty) return;
 
-    final updates = pending
-        .map((row) => LocationUpdate(
-              localId: row.localId,
-              latitude: row.latitude,
-              longitude: row.longitude,
-              timestamp: row.recordedAt,
-              isSynced: false,
-            ))
-        .toList();
-
+    final updates = pending.map((row) => LocationUpdate(
+      localId: row.localId,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      timestamp: row.recordedAt,
+      isSynced: false,
+    )).toList();
     try {
-      await _supabase.syncLocationBatch(updates);
+      await _supabase.syncLocationBatch(sessionId, updates);
       for (final row in pending) {
         await _db.markLocationSynced(row.localId);
       }
     } catch (_) {
-      // Will retry on next restore
+      // The outbox remains intact for the next retry.
     }
   }
 
-  /// Realtime stream from Supabase for the guardian's view.
-  Stream<Map<String, dynamic>> guardianLocationStream(String userId) =>
-      _supabase.guardianLocationStream(userId);
+  Stream<Map<String, dynamic>> guardianLocationStream(String shareToken) =>
+      _supabase.guardianLocationStream(shareToken);
 }

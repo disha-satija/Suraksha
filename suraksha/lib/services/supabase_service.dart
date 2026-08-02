@@ -1,56 +1,92 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/incident.dart';
 import '../models/guardian.dart';
 import '../core/constants/app_constants.dart';
+import 'api_client.dart';
 
-/// Wraps all Supabase interactions.
-/// The app never calls Supabase directly — always goes through this service.
+/// Supabase Auth initialization plus the backend API adapter.
 class SupabaseService {
-  SupabaseClient get _client => Supabase.instance.client;
+  final ApiClient _api;
+  SupabaseService({ApiClient? api}) : _api = api ?? ApiClient();
 
-  // ── Initialization (called once in main) ─────────────────────────────────
+  static bool _initialized = false;
+  static bool get isConfigured => AppConstants.supabaseUrl.isNotEmpty && AppConstants.supabaseAnonKey.isNotEmpty;
+  static bool get isInitialized => _initialized;
 
   static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: AppConstants.supabaseUrl,
-      publishableKey: AppConstants.supabaseAnonKey,
-    );
+    if (!isConfigured) return;
+    await Supabase.initialize(url: AppConstants.supabaseUrl, publishableKey: AppConstants.supabaseAnonKey);
+    _initialized = true;
   }
 
-  // ── Incidents ─────────────────────────────────────────────────────────────
+  static Future<void> signOut() async {
+    if (!_initialized) return;
+    await Supabase.instance.client.auth.signOut();
+  }
 
   Future<void> syncIncident(Incident incident) async {
-    await _client.from('incidents').upsert(incident.toSupabaseJson());
+    await _api.post('/incidents/sync', incident.toSupabaseJson());
   }
 
-  // ── Guardian location sharing ─────────────────────────────────────────────
-
-  /// Upserts user's current location into the `user_locations` table.
   Future<void> updateUserLocation({
-    required String userId,
+    required String sessionId,
     required double lat,
     required double lng,
+    required String clientEventId,
+    required DateTime recordedAt,
+    double? accuracyM,
   }) async {
-    await _client.from('user_locations').upsert({
-      'user_id': userId,
+    await _api.post('/locations/current', {
+      'sessionId': sessionId,
+      'clientEventId': clientEventId,
       'latitude': lat,
       'longitude': lng,
-      'updated_at': DateTime.now().toIso8601String(),
+      'accuracyM': accuracyM,
+      'recordedAt': recordedAt.toUtc().toIso8601String(),
     });
   }
 
-  /// Returns a Realtime stream of guardian's tracked user's location.
-  Stream<Map<String, dynamic>> guardianLocationStream(String userId) {
-    return _client
-        .from('user_locations')
-        .stream(primaryKey: ['user_id'])
-        .eq('user_id', userId)
-        .map((rows) => rows.isNotEmpty ? rows.first : {});
+  Future<List<dynamic>> getGuardians() async =>
+      (await _api.get('/guardians'))['data'] as List<dynamic>? ?? [];
+
+  Future<Map<String, dynamic>> createGuardian(Map<String, dynamic> body) => _api.post('/guardians', body);
+
+  Future<Map<String, dynamic>> updateGuardian(String id, Map<String, dynamic> body) => _api.patch('/guardians/$id', body);
+
+  Future<Map<String, dynamic>> createSharingSession({required String guardianId, int expiresInHours = 8}) =>
+      _api.post('/guardians/$guardianId/sessions', {'guardianId': guardianId, 'expiresInHours': expiresInHours});
+
+  Future<void> stopSharingSession(String sessionId) async {
+    await _api.post('/guardians/sessions/$sessionId/stop');
   }
 
-  /// Syncs a batch of location updates (offline queue flush).
-  Future<void> syncLocationBatch(List<LocationUpdate> updates) async {
-    final rows = updates.map((u) => u.toSupabaseJson()).toList();
-    await _client.from('location_history').insert(rows);
+  Future<void> syncLocationBatch(String sessionId, List<LocationUpdate> updates) async {
+    await _api.post('/locations/batch', {
+      'sessionId': sessionId,
+      'events': updates.map((u) => {
+        'clientEventId': u.localId,
+        'latitude': u.latitude,
+        'longitude': u.longitude,
+        'recordedAt': u.timestamp.toUtc().toIso8601String(),
+      }).toList(),
+    });
+  }
+
+  Future<Map<String, dynamic>> triggerSos({required double lat, required double lng, required String clientEventId, String? sessionId}) =>
+      _api.post('/sos', {'clientEventId': clientEventId, 'latitude': lat, 'longitude': lng, 'sharingSessionId': sessionId});
+
+  /// Polls the secure public share endpoint. The token is not a user ID.
+  Stream<Map<String, dynamic>> guardianLocationStream(String shareToken) async* {
+    while (true) {
+      try {
+        final payload = await _api.get('/public/shares/$shareToken/location');
+        final location = payload['data'] as Map<String, dynamic>?;
+        if (location != null) yield location;
+      } catch (_) {
+        // Temporary network failures do not terminate a guardian watch.
+      }
+      await Future<void>.delayed(const Duration(seconds: 5));
+    }
   }
 }

@@ -18,10 +18,10 @@ import 'viewmodels/map_viewmodel.dart';
 import 'viewmodels/routing_viewmodel.dart';
 import 'viewmodels/guardian_viewmodel.dart';
 import 'viewmodels/incident_viewmodel.dart';
-import 'services/groq_service.dart';
+import 'services/safe_spot_service.dart';
 import 'viewmodels/safe_spot_viewmodel.dart';
-import 'views/screens/map_screen.dart';
 import 'views/screens/guardian_screen.dart';
+import 'views/screens/auth_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,12 +73,13 @@ Future<void> main() async {
     connectivity: connectivityService,
   );
 
-  final groqService = GroqService();
+  final safeSpotService = SafeSpotService();
 
   // ── Sync on connectivity restore ────────────────────────────────────────────
   connectivityService.statusStream.listen((status) {
     if (status == ConnectivityStatus.online) {
       incidentRepo.syncOnConnectivityRestore();
+      guardianRepo.syncOnConnectivityRestore();
       connectivityService.markCacheUpdated();
     }
   });
@@ -110,7 +111,7 @@ Future<void> main() async {
           create: (_) => IncidentViewModel(incidentRepo: incidentRepo),
         ),
         ChangeNotifierProvider(
-          create: (_) => SafeSpotViewModel(groq: groqService),
+          create: (_) => SafeSpotViewModel(safeSpots: safeSpotService),
         ),
       ],
       child: const SurakshaApp(),
@@ -223,13 +224,11 @@ class SurakshaApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (_) => const MapScreen(),
+        '/': (_) => const AuthGate(),
         '/guardian': (_) => const GuardianScreen(),
         '/guardian/watch': (ctx) {
-          final userId =
-              ModalRoute.of(ctx)!.settings.arguments as String? ??
-                  'demo_user_001';
-          return GuardianWatchScreen(trackedUserId: userId);
+          final shareToken = ModalRoute.of(ctx)!.settings.arguments as String? ?? '';
+          return GuardianWatchScreen(shareToken: shareToken);
         },
       },
     );

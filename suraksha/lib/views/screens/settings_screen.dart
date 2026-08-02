@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/guardian_viewmodel.dart';
 import '../../services/settings_service.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/supabase_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -132,13 +133,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'SMS alerts use your device SIM — no internet needed.',
+                      'SOS uses server SMS when configured; the device compose screen is only a fallback.',
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ),
                 ],
               ),
+              if (SupabaseService.isInitialized) ...[
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => SupabaseService.signOut(),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign out'),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
 
               // Save button

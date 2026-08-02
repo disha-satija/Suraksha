@@ -82,7 +82,7 @@ class MapViewModel extends ChangeNotifier {
 
   SafetyGridEntry? _findNearestGridEntry(LatLng position) {
     if (grid.isEmpty) return null;
-    final dist = const Distance();
+    const dist = Distance();
     return grid.reduce((a, b) {
       final da = dist(position, LatLng(a.lat, a.lng));
       final db = dist(position, LatLng(b.lat, b.lng));

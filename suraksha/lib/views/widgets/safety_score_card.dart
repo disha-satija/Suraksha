@@ -296,14 +296,14 @@ class _ScoreCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 const SizedBox(height: 6),
-                Row(
+                const Row(
                   children: [
                     _RiskLegendDot(
                         color: AppColors.safeGreen, label: '≥75 Safe'),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _RiskLegendDot(
                         color: AppColors.warningAmber, label: '50–74'),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _RiskLegendDot(
                         color: AppColors.dangerRed, label: '<50 High'),
                   ],

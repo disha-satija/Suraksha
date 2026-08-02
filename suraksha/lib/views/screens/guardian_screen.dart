@@ -16,13 +16,6 @@ class GuardianScreen extends StatefulWidget {
 }
 
 class _GuardianScreenState extends State<GuardianScreen> {
-  // Simulated user ID — in production, comes from Supabase Auth
-  static const String _userId = 'demo_user_001';
-
-  // Demo: simulate current location as Delhi center
-  static const double _demoLat = 28.6139;
-  static const double _demoLng = 77.2090;
-
   @override
   void initState() {
     super.initState();
@@ -41,6 +34,7 @@ class _GuardianScreenState extends State<GuardianScreen> {
       ),
       body: Consumer<GuardianViewModel>(
         builder: (context, vm, _) {
+          final location = vm.lastKnownLocation ?? const LatLng(28.6139, 77.2090);
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -53,18 +47,8 @@ class _GuardianScreenState extends State<GuardianScreen> {
                 // Tracking controls
                 _TrackingCard(
                   vm: vm,
-                  onShareLocation: () => vm.updateLocation(
-                    userId: _userId,
-                    lat: _demoLat,
-                    lng: _demoLng,
-                    triggerSms: false,
-                  ),
-                  onSendSos: () => vm.updateLocation(
-                    userId: _userId,
-                    lat: _demoLat,
-                    lng: _demoLng,
-                    triggerSms: true,
-                  ),
+                  onShareLocation: () => vm.updateCurrentLocation(),
+                  onSendSos: () => vm.updateCurrentLocation(triggerSms: true),
                 ),
                 const SizedBox(height: 20),
 
@@ -84,10 +68,7 @@ class _GuardianScreenState extends State<GuardianScreen> {
                   child: SizedBox(
                     height: 220,
                     child: FlutterMap(
-                      options: const MapOptions(
-                        initialCenter: LatLng(_demoLat, _demoLng),
-                        initialZoom: 13,
-                      ),
+                      options: MapOptions(initialCenter: location, initialZoom: 13),
                       children: [
                         TileLayer(
                           urlTemplate:
@@ -97,8 +78,7 @@ class _GuardianScreenState extends State<GuardianScreen> {
                         MarkerLayer(
                           markers: [
                             Marker(
-                              point:
-                                  const LatLng(_demoLat, _demoLng),
+                              point: location,
                               child: Container(
                                 width: 32,
                                 height: 32,
@@ -177,9 +157,9 @@ class _GuardianInfoCard extends StatelessWidget {
                       ),
                     ],
                   )
-                : Column(
+                : const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'No guardian configured',
                         style: TextStyle(
@@ -317,8 +297,8 @@ class _SmsInfoCard extends StatelessWidget {
 
 /// Guardian's view — watches the tracked user's live location.
 class GuardianWatchScreen extends StatefulWidget {
-  final String trackedUserId;
-  const GuardianWatchScreen({super.key, required this.trackedUserId});
+  final String shareToken;
+  const GuardianWatchScreen({super.key, required this.shareToken});
 
   @override
   State<GuardianWatchScreen> createState() =>
@@ -331,7 +311,7 @@ class _GuardianWatchScreenState extends State<GuardianWatchScreen> {
     super.initState();
     context
         .read<GuardianViewModel>()
-        .subscribeToGuardianStream(widget.trackedUserId);
+        .subscribeToGuardianStream(widget.shareToken);
   }
 
   @override

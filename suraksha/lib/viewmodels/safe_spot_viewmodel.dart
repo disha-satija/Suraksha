@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import '../models/safe_spot.dart';
-import '../services/groq_service.dart';
+import '../services/safe_spot_service.dart';
+import '../services/api_client.dart';
 
 enum LocationState { idle, requesting, granted, denied, searching }
 
@@ -19,9 +18,12 @@ class LocationSuggestion {
 }
 
 class SafeSpotViewModel extends ChangeNotifier {
-  final GroqService _groq;
+  final SafeSpotService _safeSpotService;
+  final ApiClient _api;
 
-  SafeSpotViewModel({required GroqService groq}) : _groq = groq;
+  SafeSpotViewModel({required SafeSpotService safeSpots, ApiClient? api})
+      : _safeSpotService = safeSpots,
+        _api = api ?? ApiClient();
 
   // ── State ─────────────────────────────────────────────────────────────────
 
@@ -80,25 +82,12 @@ class SafeSpotViewModel extends ChangeNotifier {
 
   Future<void> _fetchSuggestions(String query) async {
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search'
-        '?q=${Uri.encodeComponent(query)}'
-        '&format=json&limit=6&addressdetails=0',
-      );
-      final res = await http
-          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
-          .timeout(const Duration(seconds: 6));
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body) as List;
-        _searchSuggestions = data
-            .map((e) => LocationSuggestion(
-                  label: e['display_name'] as String,
-                  lat: double.parse(e['lat'] as String),
-                  lng: double.parse(e['lon'] as String),
-                ))
-            .toList();
-      }
+      final payload = await _api.get('/geocode/search', query: {'q': query, 'limit': 6});
+      final data = payload['data'] as List<dynamic>? ?? [];
+      _searchSuggestions = data.map((item) {
+        final e = Map<String, dynamic>.from(item as Map);
+        return LocationSuggestion(label: e['label'] as String, lat: (e['lat'] as num).toDouble(), lng: (e['lng'] as num).toDouble());
+      }).toList();
     } catch (_) {
       _searchSuggestions = [];
     } finally {
@@ -219,7 +208,7 @@ class SafeSpotViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _safeSpots = await _groq.findSafeSpots(
+      _safeSpots = await _safeSpotService.findSafeSpots(
         lat: _currentLocation!.latitude,
         lng: _currentLocation!.longitude,
         locationLabel: _locationLabel.isNotEmpty ? _locationLabel : 'current location',
@@ -259,23 +248,11 @@ class SafeSpotViewModel extends ChangeNotifier {
 
   Future<LatLng?> _geocode(String query) async {
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search'
-        '?q=${Uri.encodeComponent(query)}'
-        '&format=json&limit=1',
-      );
-      final res = await http
-          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
-          .timeout(const Duration(seconds: 8));
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body) as List;
-        if (data.isNotEmpty) {
-          return LatLng(
-            double.parse(data.first['lat'] as String),
-            double.parse(data.first['lon'] as String),
-          );
-        }
+      final payload = await _api.get('/geocode/search', query: {'q': query, 'limit': 1});
+      final data = payload['data'] as List<dynamic>? ?? [];
+      if (data.isNotEmpty) {
+        final item = Map<String, dynamic>.from(data.first as Map);
+        return LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble());
       }
     } catch (_) {}
     return null;
@@ -283,28 +260,9 @@ class SafeSpotViewModel extends ChangeNotifier {
 
   Future<String> _reverseGeocode(double lat, double lng) async {
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/reverse'
-        '?lat=$lat&lon=$lng&format=json',
-      );
-      final res = await http
-          .get(uri, headers: {'User-Agent': 'Suraksha/1.0'})
-          .timeout(const Duration(seconds: 6));
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body) as Map<String, dynamic>;
-        final address = data['address'] as Map<String, dynamic>? ?? {};
-        // Build a short human-readable label
-        final parts = <String>[
-          if (address['suburb'] != null) address['suburb'] as String,
-          if (address['city'] != null)
-            address['city'] as String
-          else if (address['town'] != null)
-            address['town'] as String,
-        ];
-        if (parts.isNotEmpty) return parts.join(', ');
-        return data['display_name'] as String? ?? 'Current Location';
-      }
+      final payload = await _api.get('/geocode/reverse', query: {'lat': lat, 'lng': lng});
+      final data = payload['data'] as Map<String, dynamic>?;
+      if (data != null) return data['label'] as String? ?? 'Current Location';
     } catch (_) {}
     return 'Current Location';
   }

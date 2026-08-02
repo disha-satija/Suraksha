@@ -183,8 +183,8 @@ class _MapScreenState extends State<MapScreen> {
       mapController: _mapController,
       options: MapOptions(
         initialCenter: LatLng(
-          AppConstants.demoDefaultLat,
-          AppConstants.demoDefaultLng,
+          vm.center.latitude,
+          vm.center.longitude,
         ),
         initialZoom: AppConstants.demoDefaultZoom,
         onTap: (_, latLng) {
@@ -533,9 +533,9 @@ class _MapScreenState extends State<MapScreen> {
                     const Icon(Icons.shield,
                         color: AppColors.safeGreen, size: 20),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Safe Spots Nearby',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 17, fontWeight: FontWeight.w800),
                     ),
                     const Spacer(),
@@ -689,9 +689,9 @@ class _MapScreenState extends State<MapScreen> {
               width: double.infinity,
               color: AppColors.surface,
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Suraksha',
                     style: TextStyle(
@@ -769,12 +769,14 @@ class _MapScreenState extends State<MapScreen> {
               label: 'Report Incident',
               onTap: () {
                 Navigator.pop(context);
+                final current = context.read<SafeSpotViewModel>().currentLocation ??
+                    context.read<MapViewModel>().center;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => IncidentScreen(
-                      latitude: AppConstants.demoDefaultLat,
-                      longitude: AppConstants.demoDefaultLng,
+                      latitude: current.latitude,
+                      longitude: current.longitude,
                     ),
                   ),
                 );

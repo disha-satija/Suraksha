@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import '../models/route_model.dart';
 import '../models/safety_grid_entry.dart';
 import '../core/constants/app_constants.dart';
+import 'api_client.dart';
 /// Handles route fetching from OSRM (online) and pre-cached routes (offline).
 class RoutingService {
+  final ApiClient _api;
   List<DemoRoute>? _cachedDemoRoutes;
+
+  RoutingService({ApiClient? api}) : _api = api ?? ApiClient();
 
   Future<void> initialize() async {
     final jsonStr =
@@ -23,38 +26,42 @@ class RoutingService {
     required LatLng end,
     required List<SafetyGridEntry> grid,
   }) async {
-    final url =
-        '${AppConstants.osrmBaseUrl}/${start.longitude},${start.latitude};'
-        '${end.longitude},${end.latitude}'
-        '?alternatives=true&geometries=geojson&overview=full';
-
-    final response =
-        await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-    if (response.statusCode != 200) {
-      throw Exception('OSRM returned ${response.statusCode}');
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final routes = json['routes'] as List<dynamic>;
+    final payload = await _api.post('/routes/plan', {
+      'origin': {'lat': start.latitude, 'lng': start.longitude},
+      'destination': {'lat': end.latitude, 'lng': end.longitude},
+      'profile': 'walking',
+      'alternatives': true,
+    });
+    final routes = payload['data']?['routes'] as List<dynamic>? ?? [];
 
     return routes.asMap().entries.map((entry) {
       final idx = entry.key;
       final r = entry.value as Map<String, dynamic>;
-      final coords = (r['geometry']['coordinates'] as List<dynamic>)
+      final coords = (r['geometry'] as List<dynamic>)
           .map((c) => LatLng(
-                (c[1] as num).toDouble(),
-                (c[0] as num).toDouble(),
+                (c['lat'] as num).toDouble(),
+                (c['lng'] as num).toDouble(),
               ))
           .toList();
-      final safetyScore = _avgSafetyAlongRoute(coords, grid);
-      final explanation = _buildExplanation(coords, grid, safetyScore);
+      final safetyScore = (r['safetyScore'] as num?)?.toDouble() ?? _avgSafetyAlongRoute(coords, grid);
+      final serverExplanation = r['explanation'] as Map<String, dynamic>?;
+      final explanation = serverExplanation == null
+          ? _buildExplanation(coords, grid, safetyScore)
+          : RouteExplanation(
+              avgLighting: (serverExplanation['lighting'] as num?)?.toDouble() ?? 5,
+              avgPoliceDist: (serverExplanation['policeDistanceKm'] as num?)?.toDouble() ?? 3,
+              avgCrowd: (serverExplanation['crowdDensity'] as num?)?.toDouble() ?? 400,
+              avgCrimeCount: (serverExplanation['incidentCount'] as num?)?.toDouble() ?? 20,
+              summaryText: 'Server-scored safety route: ${(safetyScore * 100).toStringAsFixed(0)}/100.',
+              tips: (serverExplanation['tips'] as List<dynamic>? ?? []).cast<String>(),
+            );
       return RouteModel(
         id: 'route_$idx',
         polyline: coords,
-        distanceMeters: (r['distance'] as num).toDouble(),
-        durationSeconds: (r['duration'] as num).toDouble(),
+        distanceMeters: (r['distanceMeters'] as num).toDouble(),
+        durationSeconds: (r['durationSeconds'] as num).toDouble(),
         safetyScore: safetyScore,
-        riskLevel: _scoreToRisk(safetyScore),
+        riskLevel: r['riskLevel'] as String? ?? _scoreToRisk(safetyScore),
         isCached: false,
         explanation: explanation,
       );
