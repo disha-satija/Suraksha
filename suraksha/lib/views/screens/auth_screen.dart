@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/supabase_service.dart';
-import 'map_screen.dart';
+import 'main_shell.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (!SupabaseService.isInitialized) return const MapScreen();
+    if (!SupabaseService.isInitialized) return const MainShell();
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        if (Supabase.instance.client.auth.currentSession != null) return const MapScreen();
+        if (Supabase.instance.client.auth.currentSession != null) return const MainShell();
         return const AuthScreen();
       },
     );

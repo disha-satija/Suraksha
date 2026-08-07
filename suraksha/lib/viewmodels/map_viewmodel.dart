@@ -28,6 +28,7 @@ class MapViewModel extends ChangeNotifier {
   SafetyGridEntry? _selectedEntry;
   bool _isLoading = false;
   String? _error;
+  SafetyScoreResult? _areaScore;
 
   LatLng get center => _center;
   double get zoom => _zoom;
@@ -35,6 +36,7 @@ class MapViewModel extends ChangeNotifier {
   SafetyGridEntry? get selectedEntry => _selectedEntry;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  SafetyScoreResult? get areaScore => _areaScore;
   List<SafetyGridEntry> get grid => _safetyRepo.grid;
   ConnectivityStatus get connectivityStatus => _connectivity.currentStatus;
 
@@ -73,6 +75,23 @@ class MapViewModel extends ChangeNotifier {
       crimeCount: entry?.avgCrimeCount,
       timeOfDay: _currentTimeOfDay(),
       weatherCondition: 'Clear', // no weather API wired up; default is safe
+    );
+    notifyListeners();
+  }
+
+  /// Scores the area the user is currently in, for the home dashboard.
+  /// Independent of [selectedScore], which tracks map selection.
+  void refreshAreaScore(LatLng position) {
+    final entry = _findNearestGridEntry(position);
+    _areaScore = _safetyRepo.getScore(
+      lat: position.latitude,
+      lng: position.longitude,
+      lightingScore: entry?.avgLighting,
+      policeDistanceKm: entry?.avgPoliceDist,
+      crowdDensity: entry?.avgCrowd,
+      crimeCount: entry?.avgCrimeCount,
+      timeOfDay: _currentTimeOfDay(),
+      weatherCondition: 'Clear',
     );
     notifyListeners();
   }

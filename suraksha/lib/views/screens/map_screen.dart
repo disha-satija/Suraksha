@@ -9,14 +9,14 @@ import '../../viewmodels/safe_spot_viewmodel.dart';
 import '../../models/safe_spot.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/map_tile_provider.dart';
 import '../widgets/connectivity_banner.dart';
-import '../widgets/safety_score_card.dart';
-import 'incident_screen.dart';
 import 'routing_screen.dart';
-import 'settings_screen.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final VoidCallback onOpenDrawer;
+
+  const MapScreen({super.key, required this.onOpenDrawer});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -26,14 +26,35 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
   bool _searchBarVisible = false;
+  bool _hasCenteredOnLocation = false;
+
+  late final MapOptions _mapOptions;
 
   @override
   void initState() {
     super.initState();
+    _mapOptions = MapOptions(
+      initialCenter: LatLng(
+        AppConstants.demoDefaultLat,
+        AppConstants.demoDefaultLng,
+      ),
+      initialZoom: AppConstants.demoDefaultZoom,
+      minZoom: 3,
+      maxZoom: 18,
+      onTap: (_, __) => context.read<SafeSpotViewModel>().clearSelection(),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MapViewModel>().initialize();
       context.read<SafeSpotViewModel>().initLocation();
     });
+  }
+
+  // ── Zoom by a fixed step, clamped to the map's min/max zoom ────────────────
+  void _zoomBy(double delta) {
+    final camera = _mapController.camera;
+    final target = (camera.zoom + delta).clamp(3.0, 18.0);
+    if (target == camera.zoom) return;
+    _mapController.move(camera.center, target);
   }
 
   @override
@@ -76,7 +97,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: _buildDrawer(context),
       body: Consumer2<MapViewModel, SafeSpotViewModel>(
         builder: (context, vm, ssVm, _) {
           if (vm.isLoading) {
@@ -133,32 +153,6 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               ),
-
-              // Safety score card — shown when map is tapped and no safe spot
-              // is selected. Uses the same Positioned(bottom:0) pattern as the
-              // safe-spot card below. The two are mutually exclusive because
-              // ssVm.clearSelection() is called on every map tap.
-              if (vm.selectedScore != null && ssVm.selectedSpot == null)
-                Positioned(
-                  bottom: 0, left: 0, right: 0,
-                  child: SafetyScoreCard(
-                    result: vm.selectedScore!,
-                    gridEntry: vm.selectedEntry,
-                    onClose: vm.clearSelection,
-                    onReportIncident: () {
-                      final pos = vm.center;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => IncidentScreen(
-                            latitude: pos.latitude,
-                            longitude: pos.longitude,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
 
               // ── Safe spot detail card ─────────────────────────────────────
               if (ssVm.selectedSpot != null)
@@ -220,14 +214,13 @@ class _MapScreenState extends State<MapScreen> {
         initialZoom: AppConstants.demoDefaultZoom,
         onTap: (_, latLng) {
           ssVm.clearSelection();
-          vm.onMapTap(latLng);
         },
       ),
       children: [
         TileLayer(
           urlTemplate: AppConstants.onlineTileUrl,
           userAgentPackageName: 'com.suraksha.app',
-          fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          tileProvider: MapTileProvider.instance,
         ),
 
         // Safety grid circles — hidden, data still available for routing scoring
@@ -314,11 +307,9 @@ class _MapScreenState extends State<MapScreen> {
         child: Row(
           children: [
             // Hamburger
-            Builder(
-              builder: (ctx) => _MapIconButton(
-                icon: Icons.menu,
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-              ),
+            _MapIconButton(
+              icon: Icons.menu,
+              onTap: widget.onOpenDrawer,
             ),
             const SizedBox(width: 8),
 
@@ -388,6 +379,13 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
+            ),
+            const SizedBox(width: 8),
+
+            // Safe spot list button
+            _MapIconButton(
+              icon: Icons.list_rounded,
+              onTap: () => _showSafeSpotListSheet(context, ssVm),
             ),
             const SizedBox(width: 8),
 
@@ -604,7 +602,15 @@ class _MapScreenState extends State<MapScreen> {
               const Divider(height: 1),
               // List
               Expanded(
-                child: ListView.separated(
+                child: ssVm.safeSpots.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Finding safe spots near you…',
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[500]),
+                        ),
+                      )
+                    : ListView.separated(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: ssVm.safeSpots.length,
@@ -708,126 +714,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // ── Drawer ────────────────────────────────────────────────────────────────
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Suraksha',
-                    style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Women Safety Navigator',
-                    style: TextStyle(
-                        color: AppColors.subtitle, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            const SizedBox(height: 4),
-
-            _DrawerItem(
-              icon: Icons.map_outlined,
-              label: 'Safety Map',
-              onTap: () => Navigator.pop(context),
-            ),
-            _DrawerItem(
-              icon: Icons.directions_outlined,
-              label: 'Safe Routing',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const RoutingScreen()));
-              },
-            ),
-
-            // ── Nearest Safe Spot ──────────────────────────────────────────
-            Consumer<SafeSpotViewModel>(
-              builder: (ctx, ssVm, _) {
-                final nearest = ssVm.nearestSpot;
-                return _DrawerItem(
-                  icon: Icons.shield_outlined,
-                  label: 'Nearest Safe Spot',
-                  iconColor: AppColors.safeGreen,
-                  badge: nearest != null
-                      ? '${nearest.distanceKm.toStringAsFixed(1)} km'
-                      : null,
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (ssVm.safeSpots.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Set your location first to find safe spots.'),
-                          backgroundColor: AppColors.warningAmber,
-                        ),
-                      );
-                      return;
-                    }
-                    _showSafeSpotListSheet(context, ssVm);
-                  },
-                );
-              },
-            ),
-
-            _DrawerItem(
-              icon: Icons.people_outline,
-              label: 'Guardian Mode',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/guardian');
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.report_problem_outlined,
-              label: 'Report Incident',
-              onTap: () {
-                Navigator.pop(context);
-                final current = context.read<SafeSpotViewModel>().currentLocation ??
-                    context.read<MapViewModel>().center;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => IncidentScreen(
-                      latitude: current.latitude,
-                      longitude: current.longitude,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            _DrawerItem(
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ── Green Shield Marker ────────────────────────────────────────────────────────
@@ -1191,58 +1077,6 @@ class _MapIconButton extends StatelessWidget {
         ),
         child: Icon(icon, color: AppColors.onSurface, size: 18),
       ),
-    );
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? iconColor;
-  final String? badge;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.iconColor,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon,
-          color: iconColor ?? AppColors.subtitle, size: 18),
-      title: Text(
-        label,
-        style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.onSurface,
-            fontWeight: FontWeight.w500),
-      ),
-      trailing: badge != null
-          ? Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600),
-              ),
-            )
-          : null,
-      onTap: onTap,
     );
   }
 }

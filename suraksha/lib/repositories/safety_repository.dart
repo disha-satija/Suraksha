@@ -28,11 +28,21 @@ class SafetyRepository {
   }
 
   Future<void> _loadGrid() async {
+    // Safe to call twice: MapViewModel.initialize() and main() both call
+    // SafetyRepository.initialize() — skip reloading once the grid is set.
+    if (_grid != null) return;
+
     final jsonStr = await rootBundle.loadString(AppConstants.safetyGridPath);
     final data = jsonDecode(jsonStr) as List<dynamic>;
-    _grid = data
-        .map((e) => SafetyGridEntry.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final entries = <SafetyGridEntry>[];
+    for (final e in data) {
+      try {
+        entries.add(SafetyGridEntry.fromJson(e as Map<String, dynamic>));
+      } catch (_) {
+        // Skip a malformed row rather than losing the whole grid.
+      }
+    }
+    _grid = entries;
   }
 
   List<SafetyGridEntry> get grid => _grid ?? [];

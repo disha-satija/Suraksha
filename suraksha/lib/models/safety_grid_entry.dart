@@ -27,18 +27,26 @@ class SafetyGridEntry {
   });
 
   factory SafetyGridEntry.fromJson(Map<String, dynamic> json) {
+    // The bundled asset uses camelCase; a backend payload may use snake_case.
+    // Accept either rather than silently throwing and losing the whole grid.
+    num? pick(String camel, String snake) =>
+        (json[camel] ?? json[snake]) as num?;
+
     return SafetyGridEntry(
-      city: json['city'] as String,
-      area: json['area'] as String,
+      city: json['city'] as String? ?? '',
+      area: json['area'] as String? ?? '',
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
-      avgSafetyScore: (json['avg_safety_score'] as num).toDouble(),
-      avgLighting: (json['avg_lighting'] as num).toDouble(),
-      avgPoliceDist: (json['avg_police_dist'] as num).toDouble(),
-      avgCrowd: (json['avg_crowd'] as num).toDouble(),
-      avgCrimeCount: (json['avg_crime_count'] as num).toDouble(),
-      incidentCount: (json['incident_count'] as num).toInt(),
-      riskLevel: json['risk_level'] as String,
+      avgSafetyScore: pick('avgSafetyScore', 'avg_safety_score')?.toDouble() ?? 0.5,
+      avgLighting: pick('avgLighting', 'avg_lighting')?.toDouble() ?? 3.0,
+      avgPoliceDist: pick('avgPoliceDist', 'avg_police_dist')?.toDouble() ?? 2.0,
+      avgCrowd: pick('avgCrowd', 'avg_crowd')?.toDouble() ?? 300.0,
+      avgCrimeCount: pick('avgCrimeCount', 'avg_crime_count')?.toDouble() ?? 5.0,
+      incidentCount:
+          pick('incidentCount', 'incident_count')?.toInt() ??
+              pick('sampleCount', 'sample_count')?.toInt() ??
+              0,
+      riskLevel: (json['riskLevel'] ?? json['risk_level']) as String? ?? 'Medium',
     );
   }
 }

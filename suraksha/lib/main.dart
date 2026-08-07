@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 
 import 'core/constants/app_colors.dart';
+import 'core/constants/app_constants.dart';
+import 'core/map_tile_provider.dart';
 import 'services/onnx_service.dart';
 import 'services/database_service.dart';
 import 'services/supabase_service.dart';
@@ -15,10 +18,12 @@ import 'repositories/safety_repository.dart';
 import 'repositories/incident_repository.dart';
 import 'repositories/guardian_repository.dart';
 import 'repositories/routing_repository.dart';
+import 'repositories/contribute_repository.dart';
 import 'viewmodels/map_viewmodel.dart';
 import 'viewmodels/routing_viewmodel.dart';
 import 'viewmodels/guardian_viewmodel.dart';
 import 'viewmodels/incident_viewmodel.dart';
+import 'viewmodels/contribute_viewmodel.dart';
 import 'services/safe_spot_service.dart';
 import 'viewmodels/safe_spot_viewmodel.dart';
 import 'views/screens/guardian_screen.dart';
@@ -42,6 +47,19 @@ Future<void> main() async {
   final connectivityService = ConnectivityService();
   await connectivityService.initialize();
 
+  // Offline tile cache is best-effort — a failure here must never block launch.
+  // If it fails, MapTileProvider falls back to plain network tiles so the maps
+  // still render whenever there is a connection.
+  var offlineCacheReady = false;
+  try {
+    await FMTCObjectBoxBackend().initialise();
+    await const FMTCStore(AppConstants.offlineTileStoreName).manage.create();
+    offlineCacheReady = true;
+  } catch (_) {
+    // Tile caching unavailable — maps fall back to online-only tiles
+  }
+  MapTileProvider.markOfflineCacheReady(ready: offlineCacheReady);
+
   final settingsService = SettingsService();
   await settingsService.initialize();
 
@@ -61,6 +79,14 @@ Future<void> main() async {
   final supabaseService = SupabaseService();
 
   final safetyRepo = SafetyRepository(onnxService: onnxService);
+
+  // Load the bundled safety grid up front — the home dashboard, safe-spot
+  // fallback, and routing suggestions all read it, not just the map tab.
+  try {
+    await safetyRepo.initialize();
+  } catch (_) {
+    // Grid unavailable — scoring falls back to defaults
+  }
   final incidentRepo = IncidentRepository(
     db: db,
     supabase: supabaseService,
@@ -77,14 +103,20 @@ Future<void> main() async {
     routingService: routingService,
     connectivity: connectivityService,
   );
+  final contributeRepo = ContributeRepository(
+    db: db,
+    supabase: supabaseService,
+    connectivity: connectivityService,
+  );
 
-  final safeSpotService = SafeSpotService();
+  final safeSpotService = SafeSpotService(safetyRepo: safetyRepo);
 
   // ── Sync on connectivity restore ────────────────────────────────────────────
   connectivityService.statusStream.listen((status) {
     if (status == ConnectivityStatus.online) {
       incidentRepo.syncOnConnectivityRestore();
       guardianRepo.syncOnConnectivityRestore();
+      contributeRepo.syncOnConnectivityRestore();
       connectivityService.markCacheUpdated();
     }
   });
@@ -118,6 +150,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => SafeSpotViewModel(safeSpots: safeSpotService),
         ),
+        ChangeNotifierProvider(
+          create: (_) => ContributeViewModel(repo: contributeRepo),
+        ),
       ],
       child: const SurakshaApp(),
     ),
@@ -136,7 +171,7 @@ class SurakshaApp extends StatelessWidget {
         colorSchemeSeed: AppColors.primary,
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.background,
-        fontFamily: 'SF Pro Display',
+        fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -145,7 +180,7 @@ class SurakshaApp extends StatelessWidget {
           foregroundColor: AppColors.onSurface,
           surfaceTintColor: Colors.transparent,
           titleTextStyle: TextStyle(
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
             letterSpacing: -0.2,
@@ -163,15 +198,15 @@ class SurakshaApp extends StatelessWidget {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
             borderSide:
                 const BorderSide(color: AppColors.primary, width: 1.5),
           ),
@@ -186,10 +221,11 @@ class SurakshaApp extends StatelessWidget {
             foregroundColor: Colors.white,
             elevation: 0,
             shadowColor: Colors.transparent,
+            minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(28)),
             textStyle: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600),
+                fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
@@ -197,10 +233,11 @@ class SurakshaApp extends StatelessWidget {
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary),
             elevation: 0,
+            minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(28)),
             textStyle: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600),
+                fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
@@ -214,7 +251,7 @@ class SurakshaApp extends StatelessWidget {
           color: AppColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: AppColors.border),
           ),
           margin: EdgeInsets.zero,

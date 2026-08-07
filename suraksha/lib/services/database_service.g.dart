@@ -1107,17 +1107,415 @@ class LocationQueueCompanion extends UpdateCompanion<LocationQueueData> {
   }
 }
 
+class $SafeSpotVerificationsTable extends SafeSpotVerifications
+    with TableInfo<$SafeSpotVerificationsTable, SafeSpotVerificationsData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SafeSpotVerificationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _localIdMeta =
+      const VerificationMeta('localId');
+  @override
+  late final GeneratedColumn<String> localId = GeneratedColumn<String>(
+      'local_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _spotIdMeta = const VerificationMeta('spotId');
+  @override
+  late final GeneratedColumn<String> spotId = GeneratedColumn<String>(
+      'spot_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _spotNameMeta =
+      const VerificationMeta('spotName');
+  @override
+  late final GeneratedColumn<String> spotName = GeneratedColumn<String>(
+      'spot_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _questionMeta =
+      const VerificationMeta('question');
+  @override
+  late final GeneratedColumn<String> question = GeneratedColumn<String>(
+      'question', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _answerMeta = const VerificationMeta('answer');
+  @override
+  late final GeneratedColumn<bool> answer = GeneratedColumn<bool>(
+      'answer', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("answer" IN (0, 1))'));
+  static const VerificationMeta _answeredAtMeta =
+      const VerificationMeta('answeredAt');
+  @override
+  late final GeneratedColumn<DateTime> answeredAt = GeneratedColumn<DateTime>(
+      'answered_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _isSyncedMeta =
+      const VerificationMeta('isSynced');
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+      'is_synced', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [localId, spotId, spotName, question, answer, answeredAt, isSynced];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'safe_spot_verifications';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<SafeSpotVerificationsData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('local_id')) {
+      context.handle(_localIdMeta,
+          localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta));
+    } else if (isInserting) {
+      context.missing(_localIdMeta);
+    }
+    if (data.containsKey('spot_id')) {
+      context.handle(_spotIdMeta,
+          spotId.isAcceptableOrUnknown(data['spot_id']!, _spotIdMeta));
+    } else if (isInserting) {
+      context.missing(_spotIdMeta);
+    }
+    if (data.containsKey('spot_name')) {
+      context.handle(_spotNameMeta,
+          spotName.isAcceptableOrUnknown(data['spot_name']!, _spotNameMeta));
+    } else if (isInserting) {
+      context.missing(_spotNameMeta);
+    }
+    if (data.containsKey('question')) {
+      context.handle(_questionMeta,
+          question.isAcceptableOrUnknown(data['question']!, _questionMeta));
+    } else if (isInserting) {
+      context.missing(_questionMeta);
+    }
+    if (data.containsKey('answer')) {
+      context.handle(_answerMeta,
+          answer.isAcceptableOrUnknown(data['answer']!, _answerMeta));
+    } else if (isInserting) {
+      context.missing(_answerMeta);
+    }
+    if (data.containsKey('answered_at')) {
+      context.handle(
+          _answeredAtMeta,
+          answeredAt.isAcceptableOrUnknown(
+              data['answered_at']!, _answeredAtMeta));
+    } else if (isInserting) {
+      context.missing(_answeredAtMeta);
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(_isSyncedMeta,
+          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {localId};
+  @override
+  SafeSpotVerificationsData map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SafeSpotVerificationsData(
+      localId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}local_id'])!,
+      spotId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}spot_id'])!,
+      spotName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}spot_name'])!,
+      question: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}question'])!,
+      answer: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}answer'])!,
+      answeredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}answered_at'])!,
+      isSynced: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
+    );
+  }
+
+  @override
+  $SafeSpotVerificationsTable createAlias(String alias) {
+    return $SafeSpotVerificationsTable(attachedDatabase, alias);
+  }
+}
+
+class SafeSpotVerificationsData extends DataClass
+    implements Insertable<SafeSpotVerificationsData> {
+  final String localId;
+  final String spotId;
+  final String spotName;
+  final String question;
+  final bool answer;
+  final DateTime answeredAt;
+  final bool isSynced;
+  const SafeSpotVerificationsData(
+      {required this.localId,
+      required this.spotId,
+      required this.spotName,
+      required this.question,
+      required this.answer,
+      required this.answeredAt,
+      required this.isSynced});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['local_id'] = Variable<String>(localId);
+    map['spot_id'] = Variable<String>(spotId);
+    map['spot_name'] = Variable<String>(spotName);
+    map['question'] = Variable<String>(question);
+    map['answer'] = Variable<bool>(answer);
+    map['answered_at'] = Variable<DateTime>(answeredAt);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  SafeSpotVerificationsCompanion toCompanion(bool nullToAbsent) {
+    return SafeSpotVerificationsCompanion(
+      localId: Value(localId),
+      spotId: Value(spotId),
+      spotName: Value(spotName),
+      question: Value(question),
+      answer: Value(answer),
+      answeredAt: Value(answeredAt),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory SafeSpotVerificationsData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SafeSpotVerificationsData(
+      localId: serializer.fromJson<String>(json['localId']),
+      spotId: serializer.fromJson<String>(json['spotId']),
+      spotName: serializer.fromJson<String>(json['spotName']),
+      question: serializer.fromJson<String>(json['question']),
+      answer: serializer.fromJson<bool>(json['answer']),
+      answeredAt: serializer.fromJson<DateTime>(json['answeredAt']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'localId': serializer.toJson<String>(localId),
+      'spotId': serializer.toJson<String>(spotId),
+      'spotName': serializer.toJson<String>(spotName),
+      'question': serializer.toJson<String>(question),
+      'answer': serializer.toJson<bool>(answer),
+      'answeredAt': serializer.toJson<DateTime>(answeredAt),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  SafeSpotVerificationsData copyWith(
+          {String? localId,
+          String? spotId,
+          String? spotName,
+          String? question,
+          bool? answer,
+          DateTime? answeredAt,
+          bool? isSynced}) =>
+      SafeSpotVerificationsData(
+        localId: localId ?? this.localId,
+        spotId: spotId ?? this.spotId,
+        spotName: spotName ?? this.spotName,
+        question: question ?? this.question,
+        answer: answer ?? this.answer,
+        answeredAt: answeredAt ?? this.answeredAt,
+        isSynced: isSynced ?? this.isSynced,
+      );
+  SafeSpotVerificationsData copyWithCompanion(
+      SafeSpotVerificationsCompanion data) {
+    return SafeSpotVerificationsData(
+      localId: data.localId.present ? data.localId.value : this.localId,
+      spotId: data.spotId.present ? data.spotId.value : this.spotId,
+      spotName: data.spotName.present ? data.spotName.value : this.spotName,
+      question: data.question.present ? data.question.value : this.question,
+      answer: data.answer.present ? data.answer.value : this.answer,
+      answeredAt:
+          data.answeredAt.present ? data.answeredAt.value : this.answeredAt,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SafeSpotVerificationsData(')
+          ..write('localId: $localId, ')
+          ..write('spotId: $spotId, ')
+          ..write('spotName: $spotName, ')
+          ..write('question: $question, ')
+          ..write('answer: $answer, ')
+          ..write('answeredAt: $answeredAt, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      localId, spotId, spotName, question, answer, answeredAt, isSynced);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SafeSpotVerificationsData &&
+          other.localId == this.localId &&
+          other.spotId == this.spotId &&
+          other.spotName == this.spotName &&
+          other.question == this.question &&
+          other.answer == this.answer &&
+          other.answeredAt == this.answeredAt &&
+          other.isSynced == this.isSynced);
+}
+
+class SafeSpotVerificationsCompanion
+    extends UpdateCompanion<SafeSpotVerificationsData> {
+  final Value<String> localId;
+  final Value<String> spotId;
+  final Value<String> spotName;
+  final Value<String> question;
+  final Value<bool> answer;
+  final Value<DateTime> answeredAt;
+  final Value<bool> isSynced;
+  final Value<int> rowid;
+  const SafeSpotVerificationsCompanion({
+    this.localId = const Value.absent(),
+    this.spotId = const Value.absent(),
+    this.spotName = const Value.absent(),
+    this.question = const Value.absent(),
+    this.answer = const Value.absent(),
+    this.answeredAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SafeSpotVerificationsCompanion.insert({
+    required String localId,
+    required String spotId,
+    required String spotName,
+    required String question,
+    required bool answer,
+    required DateTime answeredAt,
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : localId = Value(localId),
+        spotId = Value(spotId),
+        spotName = Value(spotName),
+        question = Value(question),
+        answer = Value(answer),
+        answeredAt = Value(answeredAt);
+  static Insertable<SafeSpotVerificationsData> custom({
+    Expression<String>? localId,
+    Expression<String>? spotId,
+    Expression<String>? spotName,
+    Expression<String>? question,
+    Expression<bool>? answer,
+    Expression<DateTime>? answeredAt,
+    Expression<bool>? isSynced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (localId != null) 'local_id': localId,
+      if (spotId != null) 'spot_id': spotId,
+      if (spotName != null) 'spot_name': spotName,
+      if (question != null) 'question': question,
+      if (answer != null) 'answer': answer,
+      if (answeredAt != null) 'answered_at': answeredAt,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SafeSpotVerificationsCompanion copyWith(
+      {Value<String>? localId,
+      Value<String>? spotId,
+      Value<String>? spotName,
+      Value<String>? question,
+      Value<bool>? answer,
+      Value<DateTime>? answeredAt,
+      Value<bool>? isSynced,
+      Value<int>? rowid}) {
+    return SafeSpotVerificationsCompanion(
+      localId: localId ?? this.localId,
+      spotId: spotId ?? this.spotId,
+      spotName: spotName ?? this.spotName,
+      question: question ?? this.question,
+      answer: answer ?? this.answer,
+      answeredAt: answeredAt ?? this.answeredAt,
+      isSynced: isSynced ?? this.isSynced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (localId.present) {
+      map['local_id'] = Variable<String>(localId.value);
+    }
+    if (spotId.present) {
+      map['spot_id'] = Variable<String>(spotId.value);
+    }
+    if (spotName.present) {
+      map['spot_name'] = Variable<String>(spotName.value);
+    }
+    if (question.present) {
+      map['question'] = Variable<String>(question.value);
+    }
+    if (answer.present) {
+      map['answer'] = Variable<bool>(answer.value);
+    }
+    if (answeredAt.present) {
+      map['answered_at'] = Variable<DateTime>(answeredAt.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SafeSpotVerificationsCompanion(')
+          ..write('localId: $localId, ')
+          ..write('spotId: $spotId, ')
+          ..write('spotName: $spotName, ')
+          ..write('question: $question, ')
+          ..write('answer: $answer, ')
+          ..write('answeredAt: $answeredAt, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $IncidentOutboxTable incidentOutbox = $IncidentOutboxTable(this);
   late final $LocationQueueTable locationQueue = $LocationQueueTable(this);
+  late final $SafeSpotVerificationsTable safeSpotVerifications =
+      $SafeSpotVerificationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [incidentOutbox, locationQueue];
+      [incidentOutbox, locationQueue, safeSpotVerifications];
 }
 
 typedef $$IncidentOutboxTableCreateCompanionBuilder = IncidentOutboxCompanion
@@ -1640,6 +2038,216 @@ typedef $$LocationQueueTableProcessedTableManager = ProcessedTableManager<
     ),
     LocationQueueData,
     PrefetchHooks Function()>;
+typedef $$SafeSpotVerificationsTableCreateCompanionBuilder
+    = SafeSpotVerificationsCompanion Function({
+  required String localId,
+  required String spotId,
+  required String spotName,
+  required String question,
+  required bool answer,
+  required DateTime answeredAt,
+  Value<bool> isSynced,
+  Value<int> rowid,
+});
+typedef $$SafeSpotVerificationsTableUpdateCompanionBuilder
+    = SafeSpotVerificationsCompanion Function({
+  Value<String> localId,
+  Value<String> spotId,
+  Value<String> spotName,
+  Value<String> question,
+  Value<bool> answer,
+  Value<DateTime> answeredAt,
+  Value<bool> isSynced,
+  Value<int> rowid,
+});
+
+class $$SafeSpotVerificationsTableFilterComposer
+    extends Composer<_$AppDatabase, $SafeSpotVerificationsTable> {
+  $$SafeSpotVerificationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get localId => $composableBuilder(
+      column: $table.localId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get spotId => $composableBuilder(
+      column: $table.spotId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get spotName => $composableBuilder(
+      column: $table.spotName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get question => $composableBuilder(
+      column: $table.question, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get answer => $composableBuilder(
+      column: $table.answer, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get answeredAt => $composableBuilder(
+      column: $table.answeredAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+}
+
+class $$SafeSpotVerificationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SafeSpotVerificationsTable> {
+  $$SafeSpotVerificationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get localId => $composableBuilder(
+      column: $table.localId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get spotId => $composableBuilder(
+      column: $table.spotId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get spotName => $composableBuilder(
+      column: $table.spotName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get question => $composableBuilder(
+      column: $table.question, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get answer => $composableBuilder(
+      column: $table.answer, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get answeredAt => $composableBuilder(
+      column: $table.answeredAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SafeSpotVerificationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SafeSpotVerificationsTable> {
+  $$SafeSpotVerificationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get localId =>
+      $composableBuilder(column: $table.localId, builder: (column) => column);
+
+  GeneratedColumn<String> get spotId =>
+      $composableBuilder(column: $table.spotId, builder: (column) => column);
+
+  GeneratedColumn<String> get spotName =>
+      $composableBuilder(column: $table.spotName, builder: (column) => column);
+
+  GeneratedColumn<String> get question =>
+      $composableBuilder(column: $table.question, builder: (column) => column);
+
+  GeneratedColumn<bool> get answer =>
+      $composableBuilder(column: $table.answer, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get answeredAt => $composableBuilder(
+      column: $table.answeredAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$SafeSpotVerificationsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SafeSpotVerificationsTable,
+    SafeSpotVerificationsData,
+    $$SafeSpotVerificationsTableFilterComposer,
+    $$SafeSpotVerificationsTableOrderingComposer,
+    $$SafeSpotVerificationsTableAnnotationComposer,
+    $$SafeSpotVerificationsTableCreateCompanionBuilder,
+    $$SafeSpotVerificationsTableUpdateCompanionBuilder,
+    (
+      SafeSpotVerificationsData,
+      BaseReferences<_$AppDatabase, $SafeSpotVerificationsTable,
+          SafeSpotVerificationsData>
+    ),
+    SafeSpotVerificationsData,
+    PrefetchHooks Function()> {
+  $$SafeSpotVerificationsTableTableManager(
+      _$AppDatabase db, $SafeSpotVerificationsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SafeSpotVerificationsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SafeSpotVerificationsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SafeSpotVerificationsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> localId = const Value.absent(),
+            Value<String> spotId = const Value.absent(),
+            Value<String> spotName = const Value.absent(),
+            Value<String> question = const Value.absent(),
+            Value<bool> answer = const Value.absent(),
+            Value<DateTime> answeredAt = const Value.absent(),
+            Value<bool> isSynced = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SafeSpotVerificationsCompanion(
+            localId: localId,
+            spotId: spotId,
+            spotName: spotName,
+            question: question,
+            answer: answer,
+            answeredAt: answeredAt,
+            isSynced: isSynced,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String localId,
+            required String spotId,
+            required String spotName,
+            required String question,
+            required bool answer,
+            required DateTime answeredAt,
+            Value<bool> isSynced = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SafeSpotVerificationsCompanion.insert(
+            localId: localId,
+            spotId: spotId,
+            spotName: spotName,
+            question: question,
+            answer: answer,
+            answeredAt: answeredAt,
+            isSynced: isSynced,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SafeSpotVerificationsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $SafeSpotVerificationsTable,
+        SafeSpotVerificationsData,
+        $$SafeSpotVerificationsTableFilterComposer,
+        $$SafeSpotVerificationsTableOrderingComposer,
+        $$SafeSpotVerificationsTableAnnotationComposer,
+        $$SafeSpotVerificationsTableCreateCompanionBuilder,
+        $$SafeSpotVerificationsTableUpdateCompanionBuilder,
+        (
+          SafeSpotVerificationsData,
+          BaseReferences<_$AppDatabase, $SafeSpotVerificationsTable,
+              SafeSpotVerificationsData>
+        ),
+        SafeSpotVerificationsData,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1648,4 +2256,6 @@ class $AppDatabaseManager {
       $$IncidentOutboxTableTableManager(_db, _db.incidentOutbox);
   $$LocationQueueTableTableManager get locationQueue =>
       $$LocationQueueTableTableManager(_db, _db.locationQueue);
+  $$SafeSpotVerificationsTableTableManager get safeSpotVerifications =>
+      $$SafeSpotVerificationsTableTableManager(_db, _db.safeSpotVerifications);
 }

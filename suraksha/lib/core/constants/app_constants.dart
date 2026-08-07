@@ -31,6 +31,9 @@ class AppConstants {
   static const String onlineTileUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
+  // FMTC store that holds downloaded offline tiles
+  static const String offlineTileStoreName = 'suraksha_offline_tiles';
+
   // ── Routing ───────────────────────────────────────────────────────────────
 
   // ── Safety score thresholds ───────────────────────────────────────────────

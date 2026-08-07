@@ -48,6 +48,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.10+1
   cached_network_image: ^3.3.1
+  flutter_map_tile_caching: ^10.0.0
 
 dev_dependencies:
   flutter_test:
@@ -64,3 +65,19 @@ flutter:
     - assets/model/model_weights.json
     - assets/data/safety_grid.json
     - assets/data/demo_routes.json
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Poppins-Black.ttf
+          weight: 900

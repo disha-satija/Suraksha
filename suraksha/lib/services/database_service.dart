@@ -6,6 +6,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import '../models/incident.dart';
 import '../models/guardian.dart';
+import '../models/safe_spot_verification.dart';
+import '../models/safe_spot_submission.dart';
 
 part 'database_service.g.dart';
 
@@ -44,14 +46,50 @@ class LocationQueue extends Table {
   Set<Column> get primaryKey => {localId};
 }
 
+@DataClassName('SafeSpotVerificationsData')
+class SafeSpotVerifications extends Table {
+  TextColumn get localId => text()();
+  TextColumn get spotId => text()();
+  TextColumn get spotName => text()();
+  TextColumn get question => text()();
+  BoolColumn get answer => boolean()();
+  DateTimeColumn get answeredAt => dateTime()();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {localId};
+}
+
+@DataClassName('SafeSpotSubmissionsData')
+class SafeSpotSubmissions extends Table {
+  TextColumn get localId => text()();
+  TextColumn get name => text()();
+  TextColumn get category => text()();
+  TextColumn get address => text()();
+  RealColumn get lat => real()();
+  RealColumn get lng => real()();
+  TextColumn get whySafe => text()();
+  DateTimeColumn get submittedAt => dateTime()();
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {localId};
+}
+
 // ── Database ───────────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [IncidentOutbox, LocationQueue])
+@DriftDatabase(tables: [
+  IncidentOutbox,
+  LocationQueue,
+  SafeSpotVerifications,
+  SafeSpotSubmissions,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -67,6 +105,14 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(incidentOutbox, incidentOutbox.crimeCount);
             await m.addColumn(incidentOutbox, incidentOutbox.weatherCondition);
             await m.addColumn(incidentOutbox, incidentOutbox.incidentTimestamp);
+          }
+          if (from < 3) {
+            // v2 → v3: community safe-spot verifications
+            await m.createTable(safeSpotVerifications);
+          }
+          if (from < 4) {
+            // v3 → v4: user-suggested safe places awaiting moderation
+            await m.createTable(safeSpotSubmissions);
           }
         },
       );
@@ -134,6 +180,122 @@ class AppDatabase extends _$AppDatabase {
         .write(const LocationQueueCompanion(
           isSynced: Value(true),
         ));
+  }
+
+  // ── Safe spot verifications ──────────────────────────────────────────────────
+
+  Future<void> insertVerification(SafeSpotVerification verification) async {
+    await into(safeSpotVerifications).insert(
+      SafeSpotVerificationsCompanion.insert(
+        localId: verification.localId,
+        spotId: verification.spotId,
+        spotName: verification.spotName,
+        question: verification.question,
+        answer: verification.answer,
+        answeredAt: verification.answeredAt,
+      ),
+    );
+  }
+
+  Future<List<SafeSpotVerification>> getUnsyncedVerifications() async {
+    final rows = await (select(safeSpotVerifications)
+          ..where((t) => t.isSynced.equals(false)))
+        .get();
+    return rows
+        .map((r) => SafeSpotVerification(
+              localId: r.localId,
+              spotId: r.spotId,
+              spotName: r.spotName,
+              question: r.question,
+              answer: r.answer,
+              answeredAt: r.answeredAt,
+              isSynced: r.isSynced,
+            ))
+        .toList();
+  }
+
+  Future<void> markVerificationSynced(String localId) async {
+    await (update(safeSpotVerifications)
+          ..where((t) => t.localId.equals(localId)))
+        .write(const SafeSpotVerificationsCompanion(
+          isSynced: Value(true),
+        ));
+  }
+
+  /// IDs of spots this device has already answered about since [cutoff].
+  /// Used to avoid asking the same question twice.
+  Future<Set<String>> getVerifiedSpotIdsSince(DateTime cutoff) async {
+    final rows = await (select(safeSpotVerifications)
+          ..where((t) => t.answeredAt.isBiggerOrEqualValue(cutoff)))
+        .get();
+    return rows.map((r) => r.spotId).toSet();
+  }
+
+  // ── Safe spot submissions ────────────────────────────────────────────────────
+
+  Future<void> insertSubmission(SafeSpotSubmission submission) async {
+    await into(safeSpotSubmissions).insert(
+      SafeSpotSubmissionsCompanion.insert(
+        localId: submission.localId,
+        name: submission.name,
+        category: submission.category,
+        address: submission.address,
+        lat: submission.lat,
+        lng: submission.lng,
+        whySafe: submission.whySafe,
+        submittedAt: submission.submittedAt,
+        status: Value(submission.status),
+      ),
+    );
+  }
+
+  Future<List<SafeSpotSubmission>> getUnsyncedSubmissions() async {
+    final rows = await (select(safeSpotSubmissions)
+          ..where((t) => t.isSynced.equals(false)))
+        .get();
+    return rows
+        .map((r) => SafeSpotSubmission(
+              localId: r.localId,
+              name: r.name,
+              category: r.category,
+              address: r.address,
+              lat: r.lat,
+              lng: r.lng,
+              whySafe: r.whySafe,
+              submittedAt: r.submittedAt,
+              status: r.status,
+              isSynced: r.isSynced,
+            ))
+        .toList();
+  }
+
+  Future<void> markSubmissionSynced(String localId) async {
+    await (update(safeSpotSubmissions)
+          ..where((t) => t.localId.equals(localId)))
+        .write(const SafeSpotSubmissionsCompanion(
+          isSynced: Value(true),
+        ));
+  }
+
+  /// All of this device's suggestions, newest first.
+  Future<List<SafeSpotSubmission>> getMySubmissions() async {
+    final rows = await (select(safeSpotSubmissions)
+          ..orderBy([(t) => OrderingTerm.desc(t.submittedAt)]))
+        .get();
+    return rows
+        .map((r) => SafeSpotSubmission(
+              localId: r.localId,
+              name: r.name,
+              category: r.category,
+              address: r.address,
+              lat: r.lat,
+              lng: r.lng,
+              whySafe: r.whySafe,
+              submittedAt: r.submittedAt,
+              status: r.status,
+              isSynced: r.isSynced,
+            ))
+        .toList();
   }
 }
 

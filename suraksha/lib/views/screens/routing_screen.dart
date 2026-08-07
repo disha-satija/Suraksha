@@ -170,9 +170,20 @@ class _RoutingScreenState extends State<RoutingScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Safe Routing'),
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
+        toolbarHeight: 40,
+        // The app-wide AppBarTheme sets an explicit black titleTextStyle, which
+        // wins over foregroundColor — so the title has to be restated here to
+        // read white on the red bar.
+        titleTextStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          letterSpacing: -0.2,
+        ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),

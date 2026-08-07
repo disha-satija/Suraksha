@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/incident.dart';
 import '../models/guardian.dart';
+import '../models/safe_spot_verification.dart';
+import '../models/safe_spot_submission.dart';
 import '../core/constants/app_constants.dart';
 import 'api_client.dart';
 
@@ -29,6 +31,16 @@ class SupabaseService {
   /// Returns the server response map containing [safetyScore] and [riskLevel].
   Future<Map<String, dynamic>> syncIncident(Incident incident) async {
     return _api.post('/incidents/sync', incident.toSyncJson());
+  }
+
+  /// Pushes a community safe-spot verification to the backend.
+  Future<void> syncSafeSpotVerification(SafeSpotVerification verification) async {
+    await _api.post('/safe-spots/verifications', verification.toSyncJson());
+  }
+
+  /// Submits a user-suggested safe place for moderation.
+  Future<void> syncSafeSpotSubmission(SafeSpotSubmission submission) async {
+    await _api.post('/safe-spots/submissions', submission.toSyncJson());
   }
 
   Future<void> updateUserLocation({

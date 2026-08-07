@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/guardian_viewmodel.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/map_tile_provider.dart';
 import '../widgets/connectivity_banner.dart';
 
 /// User's view — shows sharing status + SMS fallback trigger.
@@ -19,7 +20,12 @@ class _GuardianScreenState extends State<GuardianScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<GuardianViewModel>().initialize();
+    // Deferred to after the first frame: initialize() notifies listeners, and
+    // as a tab in the shell's IndexedStack this screen is built during the
+    // very first frame — notifying mid-build throws "setState() during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GuardianViewModel>().initialize();
+    });
   }
 
   @override
@@ -27,6 +33,7 @@ class _GuardianScreenState extends State<GuardianScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guardian Mode'),
+        automaticallyImplyLeading: false,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),
@@ -71,9 +78,9 @@ class _GuardianScreenState extends State<GuardianScreen> {
                       options: MapOptions(initialCenter: location, initialZoom: 13),
                       children: [
                         TileLayer(
-                          urlTemplate:
-                              AppConstants.onlineTileUrl,
+                          urlTemplate: AppConstants.onlineTileUrl,
                           userAgentPackageName: 'com.suraksha.app',
+                          tileProvider: MapTileProvider.instance,
                         ),
                         MarkerLayer(
                           markers: [
@@ -337,6 +344,7 @@ class _GuardianWatchScreenState extends State<GuardianWatchScreen> {
               TileLayer(
                 urlTemplate: AppConstants.onlineTileUrl,
                 userAgentPackageName: 'com.suraksha.app',
+                tileProvider: MapTileProvider.instance,
               ),
               if (loc != null)
                 MarkerLayer(

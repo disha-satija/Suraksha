@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/incident_viewmodel.dart';
+import '../../viewmodels/map_viewmodel.dart';
+import '../../viewmodels/safe_spot_viewmodel.dart';
 import '../../core/constants/app_colors.dart';
 import '../widgets/connectivity_banner.dart';
 
 class IncidentScreen extends StatefulWidget {
-  final double latitude;
-  final double longitude;
+  final double? latitude;
+  final double? longitude;
 
   const IncidentScreen({
     super.key,
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
   });
 
   @override
@@ -19,14 +21,26 @@ class IncidentScreen extends StatefulWidget {
 }
 
 class _IncidentScreenState extends State<IncidentScreen> {
+  // ── Resolve the coordinates to report against ─────────────────────────────
+  // Prefer the values passed in by the caller; when this screen is opened as
+  // a tab root there is no caller, so fall back to the last known safe-spot
+  // location, then to the map's current center.
+  double get _latitude =>
+      widget.latitude ??
+      context.read<SafeSpotViewModel>().currentLocation?.latitude ??
+      context.read<MapViewModel>().center.latitude;
+
+  double get _longitude =>
+      widget.longitude ??
+      context.read<SafeSpotViewModel>().currentLocation?.longitude ??
+      context.read<MapViewModel>().center.longitude;
+
   @override
   void initState() {
     super.initState();
     // Kick off reverse geocode as soon as the screen opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<IncidentViewModel>()
-          .fetchLocation(widget.latitude, widget.longitude);
+      context.read<IncidentViewModel>().fetchLocation(_latitude, _longitude);
     });
   }
 
@@ -35,6 +49,7 @@ class _IncidentScreenState extends State<IncidentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Report Incident'),
+        automaticallyImplyLeading: false,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: ConnectivityBanner(),
@@ -48,7 +63,7 @@ class _IncidentScreenState extends State<IncidentScreen> {
               riskLevel: vm.riskLevel,
               onDone: () {
                 vm.reset();
-                Navigator.pop(context);
+                if (Navigator.canPop(context)) Navigator.pop(context);
               },
             );
           }
@@ -60,8 +75,8 @@ class _IncidentScreenState extends State<IncidentScreen> {
               children: [
                 // ── Location chip ──────────────────────────────────────────
                 _LocationChip(
-                  latitude: widget.latitude,
-                  longitude: widget.longitude,
+                  latitude: _latitude,
+                  longitude: _longitude,
                   city: vm.city,
                   area: vm.area,
                 ),
@@ -83,61 +98,61 @@ class _IncidentScreenState extends State<IncidentScreen> {
                 const SizedBox(height: 20),
 
                 // ── Lighting score ─────────────────────────────────────────
-                _SliderRow(
+                _ChoiceField(
                   label: 'Area Lighting',
                   sublabel: 'How well-lit was the area?',
                   value: vm.lightingScore,
-                  min: 1,
-                  max: 5,
-                  divisions: 40,
-                  displayValue: vm.lightingScore.toStringAsFixed(1),
-                  minLabel: 'Very Dark',
-                  maxLabel: 'Bright',
+                  options: const [
+                    (text: 'Dark', value: 1.0),
+                    (text: 'Dim', value: 2.5),
+                    (text: 'Moderate', value: 3.0),
+                    (text: 'Well lit', value: 5.0),
+                  ],
                   onChanged: vm.setLightingScore,
                 ),
                 const SizedBox(height: 16),
 
                 // ── Police distance ────────────────────────────────────────
-                _SliderRow(
+                _ChoiceField(
                   label: 'Nearest Police Station',
-                  sublabel: 'Estimated distance in km',
+                  sublabel: 'Roughly how far was the nearest police station?',
                   value: vm.policeDistanceKm,
-                  min: 0.1,
-                  max: 20,
-                  divisions: 199,
-                  displayValue: '${vm.policeDistanceKm.toStringAsFixed(1)} km',
-                  minLabel: 'Very Close',
-                  maxLabel: '20 km',
+                  options: const [
+                    (text: 'Very close', value: 0.5),
+                    (text: 'Nearby', value: 2.0),
+                    (text: 'Far', value: 6.0),
+                    (text: 'Very far / not sure', value: 15.0),
+                  ],
                   onChanged: vm.setPoliceDistanceKm,
                 ),
                 const SizedBox(height: 16),
 
                 // ── Crowd density ──────────────────────────────────────────
-                _SliderRow(
-                  label: 'Crowd Density',
-                  sublabel: 'Approx. people visible nearby',
+                _ChoiceField(
+                  label: 'How busy was it?',
+                  sublabel: 'Roughly how many people were around?',
                   value: vm.crowdDensity,
-                  min: 0,
-                  max: 1000,
-                  divisions: 100,
-                  displayValue: vm.crowdDensity.round().toString(),
-                  minLabel: 'Empty',
-                  maxLabel: 'Crowded',
+                  options: const [
+                    (text: 'Empty', value: 0.0),
+                    (text: 'A few people', value: 50.0),
+                    (text: 'Busy', value: 300.0),
+                    (text: 'Crowded', value: 800.0),
+                  ],
                   onChanged: vm.setCrowdDensity,
                 ),
                 const SizedBox(height: 16),
 
                 // ── Crime count ────────────────────────────────────────────
-                _SliderRow(
-                  label: 'Recent Incidents in Area',
-                  sublabel: 'Known incidents nearby (last 90 days)',
+                _ChoiceField(
+                  label: 'Recent Incidents Nearby',
+                  sublabel: 'Incidents you know of here in the last 90 days',
                   value: vm.crimeCount.toDouble(),
-                  min: 0,
-                  max: 50,
-                  divisions: 50,
-                  displayValue: vm.crimeCount.toString(),
-                  minLabel: 'None',
-                  maxLabel: '50+',
+                  options: const [
+                    (text: 'None I know of', value: 0.0),
+                    (text: 'A few', value: 5.0),
+                    (text: 'Several', value: 15.0),
+                    (text: 'Many', value: 35.0),
+                  ],
                   onChanged: vm.setCrimeCount,
                 ),
                 const SizedBox(height: 20),
@@ -204,8 +219,8 @@ class _IncidentScreenState extends State<IncidentScreen> {
                     onPressed: vm.isSubmitting
                         ? null
                         : () => vm.submitIncident(
-                              latitude: widget.latitude,
-                              longitude: widget.longitude,
+                              latitude: _latitude,
+                              longitude: _longitude,
                             ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -300,28 +315,18 @@ class _LocationChip extends StatelessWidget {
   }
 }
 
-class _SliderRow extends StatelessWidget {
+class _ChoiceField extends StatelessWidget {
   final String label;
   final String sublabel;
   final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final String displayValue;
-  final String minLabel;
-  final String maxLabel;
+  final List<({String text, double value})> options;
   final ValueChanged<double> onChanged;
 
-  const _SliderRow({
+  const _ChoiceField({
     required this.label,
     required this.sublabel,
     required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.displayValue,
-    required this.minLabel,
-    required this.maxLabel,
+    required this.options,
     required this.onChanged,
   });
 
@@ -330,54 +335,67 @@ class _SliderRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Text(label,
+            style:
+                const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(sublabel,
+            style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14)),
-                Text(sublabel,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ],
-            ),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
+            for (final option in options)
+              _ChoiceChip(
+                text: option.text,
+                selected: (value - option.value).abs() < 0.01,
+                onTap: () => onChanged(option.value),
               ),
-              child: Text(
-                displayValue,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: AppColors.primary),
-              ),
-            ),
-          ],
-        ),
-        Slider(
-          value: value.clamp(min, max),
-          min: min,
-          max: max,
-          divisions: divisions,
-          activeColor: AppColors.primary,
-          onChanged: onChanged,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(minLabel,
-                style: const TextStyle(fontSize: 10, color: Colors.grey)),
-            Text(maxLabel,
-                style: const TextStyle(fontSize: 10, color: Colors.grey)),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ChoiceChip extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ChoiceChip({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary : AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: selected
+                ? null
+                : Border.all(color: AppColors.border),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: selected ? Colors.white : AppColors.onSurface,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

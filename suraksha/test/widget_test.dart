@@ -15,18 +15,27 @@ void main() {
       longitude: 77.6,
       crimeType: 'Harassment',
       description: 'Test report',
+      lightingScore: 3.0,
+      policeStationDistanceKm: 2.0,
+      crowdDensity: 300.0,
+      crimeCount: 5,
+      weatherCondition: 'Clear',
       timeOfDay: 'Night',
       reportedAt: DateTime.utc(2026, 1, 1),
       isSynced: false,
     );
 
-    expect(incident.toSupabaseJson(), {
+    expect(incident.toSyncJson(), {
       'clientEventId': 'event-1',
       'latitude': 12.9,
       'longitude': 77.6,
       'crimeType': 'Harassment',
       'description': 'Test report',
-      'timeOfDay': 'Night',
+      'lightingScore': 3.0,
+      'policeStationDistanceKm': 2.0,
+      'crowdDensity': 300.0,
+      'crimeCount': 5,
+      'weatherCondition': 'Clear',
       'reportedAt': '2026-01-01T00:00:00.000Z',
     });
   });
