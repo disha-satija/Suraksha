@@ -42,9 +42,14 @@ reference to `AppColors.*` keeps compiling.
 `AppColors.forScore()` logic is unchanged — the map/route score gradient must remain
 green→amber→red so danger is still readable now that red is also the brand colour.
 
-**Typography** — add the `google_fonts` package. Replace `fontFamily: 'SF Pro Display'`
-in `main.dart` with a Poppins `textTheme`. Weights used: Regular (400), Medium (500),
-SemiBold (600), Bold (700).
+**Typography** — bundle Poppins as local TTF assets under `assets/fonts/` and declare
+them in `pubspec.yaml`'s `fonts:` section. Replace `fontFamily: 'SF Pro Display'` in
+`main.dart` with `'Poppins'`. Weights used: Regular (400), Medium (500), SemiBold (600),
+Bold (700).
+
+The `google_fonts` package is deliberately **not** used: it fetches font files over the
+network on first use, which would leave an offline-first safety app rendering fallback
+type exactly when connectivity is worst.
 
 **ThemeData** — in `main.dart`: pill-shaped buttons (`borderRadius: 28` for primary CTAs),
 `cardTheme` radius bumped to 16 with a soft border, `AppBarTheme` and
@@ -115,7 +120,9 @@ safety-scoring model in this pass. Changing model inputs is a separate, larger c
 
 ### D. Offline Maps
 
-Add `flutter_map_tile_caching` (FMTC version compatible with `flutter_map ^7`).
+Add `flutter_map_tile_caching ^10.0.0` — the version line that resolves against
+`flutter_map ^7.0.2`. Note it is GPL-v3 licensed, so adding it places a copyleft
+obligation on this app; that is an accepted trade for real offline map capability.
 
 - Initialize the FMTC backend in `main.dart` at startup, before `runApp`, wrapped in a
   try/catch consistent with the existing best-effort service inits — a caching failure
@@ -135,10 +142,18 @@ Add `flutter_map_tile_caching` (FMTC version compatible with `flutter_map ^7`).
 
 ## Testing
 
+**Baseline first:** `flutter test` currently fails — `test/widget_test.dart` does not
+compile against the current `Incident` model (five `required` params missing, and it calls
+a removed `toSupabaseJson()`). That gets repaired before any feature work, or no later
+verification means anything.
+
+- Unit test: the palette matches the Empower Her values, and `AppColors.forScore` still
+  spans green/amber/red so danger stays distinguishable from the brand red.
 - Widget test: `bottom_nav_bar` renders 4 labelled items and fires the correct callback per tap.
-- Widget test: `ContributeScreen` renders pending questions, and answering Yes/No advances
-  progress and records via the view model.
-- Unit test: `ContributeRepository` writes a verification row and marks it unsynced when offline.
+- Unit test: `ContributeViewModel` builds at most 2 questions, skips already-answered spots,
+  and records an answer through the repository. Uses a fake that `implements
+  ContributeRepository`, so no database or network is involved.
+- Unit test: `SafeSpotVerification.toSyncJson()` matches the backend contract.
 - Manual verification via `flutter run`: confirm the red/black/white theme renders across
   Map, Guardian, Incident, and Routing screens; confirm an offline download completes and
   those tiles still render in airplane mode.
