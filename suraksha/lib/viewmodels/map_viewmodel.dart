@@ -57,15 +57,34 @@ class MapViewModel extends ChangeNotifier {
 
   void onMapTap(LatLng position) {
     _center = position;
-    final result = _safetyRepo.getScore(
+
+    // Find nearest grid entry first so we can pass its features to ONNX.
+    _selectedEntry = _findNearestGridEntry(position);
+    final entry = _selectedEntry;
+
+    _selectedScore = _safetyRepo.getScore(
       lat: position.latitude,
       lng: position.longitude,
+      // Pass grid cell features so ONNX inference fires (safety_repository.dart:51-55
+      // requires all four non-null to use the model rather than the grid fallback).
+      lightingScore: entry?.avgLighting,
+      policeDistanceKm: entry?.avgPoliceDist,
+      crowdDensity: entry?.avgCrowd,
+      crimeCount: entry?.avgCrimeCount,
+      timeOfDay: _currentTimeOfDay(),
+      weatherCondition: 'Clear', // no weather API wired up; default is safe
     );
-    _selectedScore = result;
-
-    // Find nearest grid entry for area name
-    _selectedEntry = _findNearestGridEntry(position);
     notifyListeners();
+  }
+
+  /// Maps the current hour to one of the five ONNX time-of-day categories.
+  String _currentTimeOfDay() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Morning';
+    if (hour >= 12 && hour < 17) return 'Afternoon';
+    if (hour >= 17 && hour < 20) return 'Evening';
+    if (hour >= 20 && hour < 23) return 'Night';
+    return 'Late Night';
   }
 
   void moveCamera(LatLng position, {double? zoom}) {

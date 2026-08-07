@@ -7,6 +7,11 @@ class RouteExplanation {
   final double avgCrowd;
   final double avgCrimeCount;
   final String summaryText;
+  final String? summary;
+  final int? lowLightingPoints;
+  final int? distantPolicePoints;
+  final int? highCrimePoints;
+  final int? sampledPointsCount;
   final List<String> tips;
 
   const RouteExplanation({
@@ -15,73 +20,109 @@ class RouteExplanation {
     required this.avgCrowd,
     required this.avgCrimeCount,
     required this.summaryText,
+    this.summary,
+    this.lowLightingPoints,
+    this.distantPolicePoints,
+    this.highCrimePoints,
+    this.sampledPointsCount,
     required this.tips,
   });
 
   /// Per-factor rows for the UI — each has a label, value, icon, and
-  /// a simple sentiment (positive/negative/neutral).
-  List<RouteFactorRow> get factors => [
-        RouteFactorRow(
-          icon: '💡',
-          label: 'Avg Lighting',
-          value: '${avgLighting.toStringAsFixed(1)} / 10',
-          sentiment: avgLighting >= 7
-              ? RouteSentiment.positive
-              : avgLighting >= 4
-                  ? RouteSentiment.neutral
-                  : RouteSentiment.negative,
-          detail: avgLighting >= 7
-              ? 'Well-lit route — good visibility throughout.'
-              : avgLighting >= 4
-                  ? 'Mixed lighting — some poorly lit stretches.'
-                  : 'Poorly lit route — avoid at night.',
-        ),
-        RouteFactorRow(
-          icon: '🚔',
-          label: 'Avg Police Distance',
-          value: '${avgPoliceDist.toStringAsFixed(1)} km',
-          sentiment: avgPoliceDist <= 2
-              ? RouteSentiment.positive
-              : avgPoliceDist <= 5
-                  ? RouteSentiment.neutral
-                  : RouteSentiment.negative,
-          detail: avgPoliceDist <= 2
-              ? 'Police stations close to route — fast response.'
-              : avgPoliceDist <= 5
-                  ? 'Moderate police coverage along route.'
-                  : 'Police stations far from route — lower coverage.',
-        ),
-        RouteFactorRow(
-          icon: '👥',
-          label: 'Avg Crowd Density',
-          value: '${avgCrowd.toInt()}',
-          sentiment: avgCrowd >= 600
-              ? RouteSentiment.positive
-              : avgCrowd >= 300
-                  ? RouteSentiment.neutral
-                  : RouteSentiment.negative,
-          detail: avgCrowd >= 600
-              ? 'Busy route — high natural surveillance.'
-              : avgCrowd >= 300
-                  ? 'Moderate foot traffic along route.'
-                  : 'Low foot traffic — less natural surveillance.',
-        ),
-        RouteFactorRow(
-          icon: '⚠️',
-          label: 'Avg Incident Count',
-          value: '${avgCrimeCount.toInt()} incidents',
-          sentiment: avgCrimeCount <= 10
-              ? RouteSentiment.positive
-              : avgCrimeCount <= 30
-                  ? RouteSentiment.neutral
-                  : RouteSentiment.negative,
-          detail: avgCrimeCount <= 10
-              ? 'Very few incidents recorded along this route.'
-              : avgCrimeCount <= 30
-                  ? 'Moderate incident history along route.'
-                  : 'High incident history — exercise caution.',
-        ),
-      ];
+  /// dynamic detail driven by real backend waypoint sampling when available.
+  List<RouteFactorRow> get factors {
+    final n = sampledPointsCount;
+
+    String lightingDetail;
+    if (lowLightingPoints != null && n != null) {
+      lightingDetail = lowLightingPoints == 0
+          ? 'All $n sampled waypoints are adequately lit.'
+          : '$lowLightingPoints of $n sampled waypoints have low lighting (< 4.0).';
+    } else {
+      lightingDetail = avgLighting >= 7
+          ? 'Well-lit route — good visibility throughout.'
+          : avgLighting >= 4
+              ? 'Mixed lighting — some poorly lit stretches.'
+              : 'Poorly lit route — avoid at night.';
+    }
+
+    String policeDetail;
+    if (distantPolicePoints != null && n != null) {
+      policeDetail = distantPolicePoints == 0
+          ? 'All $n sampled waypoints are within 5km of a police station.'
+          : '$distantPolicePoints of $n sampled waypoints are over 5km from a police station.';
+    } else {
+      policeDetail = avgPoliceDist <= 2
+          ? 'Police stations close to route — fast response.'
+          : avgPoliceDist <= 5
+              ? 'Moderate police coverage along route.'
+              : 'Police stations far from route — lower coverage.';
+    }
+
+    String crimeDetail;
+    if (highCrimePoints != null && n != null) {
+      crimeDetail = highCrimePoints == 0
+          ? 'No elevated incident clusters across all $n sampled waypoints.'
+          : '$highCrimePoints of $n sampled waypoints have elevated incident history (> 30 incidents).';
+    } else {
+      crimeDetail = avgCrimeCount <= 10
+          ? 'Very few incidents recorded along this route.'
+          : avgCrimeCount <= 30
+              ? 'Moderate incident history along route.'
+              : 'High incident history — exercise caution.';
+    }
+
+    return [
+      RouteFactorRow(
+        icon: '💡',
+        label: 'Avg Lighting',
+        value: '${avgLighting.toStringAsFixed(1)} / 10',
+        sentiment: avgLighting >= 7
+            ? RouteSentiment.positive
+            : avgLighting >= 4
+                ? RouteSentiment.neutral
+                : RouteSentiment.negative,
+        detail: lightingDetail,
+      ),
+      RouteFactorRow(
+        icon: '🚔',
+        label: 'Avg Police Distance',
+        value: '${avgPoliceDist.toStringAsFixed(1)} km',
+        sentiment: avgPoliceDist <= 2
+            ? RouteSentiment.positive
+            : avgPoliceDist <= 5
+                ? RouteSentiment.neutral
+                : RouteSentiment.negative,
+        detail: policeDetail,
+      ),
+      RouteFactorRow(
+        icon: '👥',
+        label: 'Avg Crowd Density',
+        value: '${avgCrowd.toInt()}',
+        sentiment: avgCrowd >= 600
+            ? RouteSentiment.positive
+            : avgCrowd >= 300
+                ? RouteSentiment.neutral
+                : RouteSentiment.negative,
+        detail: avgCrowd >= 600
+            ? 'Busy route — high natural surveillance.'
+            : avgCrowd >= 300
+                ? 'Moderate foot traffic along route.'
+                : 'Low foot traffic — less natural surveillance.',
+      ),
+      RouteFactorRow(
+        icon: '⚠️',
+        label: 'Avg Incident Count',
+        value: '${avgCrimeCount.toInt()} incidents',
+        sentiment: avgCrimeCount <= 10
+            ? RouteSentiment.positive
+            : avgCrimeCount <= 30
+                ? RouteSentiment.neutral
+                : RouteSentiment.negative,
+        detail: crimeDetail,
+      ),
+    ];
+  }
 }
 
 enum RouteSentiment { positive, neutral, negative }

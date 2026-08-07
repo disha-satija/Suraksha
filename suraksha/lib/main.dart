@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,8 +29,12 @@ Future<void> main() async {
 
   // ── Initialize services ─────────────────────────────────────────────────────
   // Supabase init is best-effort — placeholder keys mean offline-only mode for now.
+  // The 8-second timeout ensures a hanging DNS lookup can't stall startup indefinitely;
+  // any exception (including TimeoutException) falls into the catch below.
   try {
-    await SupabaseService.initialize();
+    await SupabaseService.initialize()
+        .timeout(const Duration(seconds: 8),
+            onTimeout: () => throw TimeoutException('Supabase init timed out'));
   } catch (_) {
     // Supabase unavailable — app runs fully offline
   }
@@ -108,7 +113,7 @@ Future<void> main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (_) => IncidentViewModel(incidentRepo: incidentRepo),
+          create: (_) => IncidentViewModel(incidentRepo: incidentRepo, supabase: supabaseService),
         ),
         ChangeNotifierProvider(
           create: (_) => SafeSpotViewModel(safeSpots: safeSpotService),

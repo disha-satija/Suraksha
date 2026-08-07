@@ -10,6 +10,7 @@ import '../../models/safe_spot.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../widgets/connectivity_banner.dart';
+import '../widgets/safety_score_card.dart';
 import 'incident_screen.dart';
 import 'routing_screen.dart';
 import 'settings_screen.dart';
@@ -61,8 +62,14 @@ class _MapScreenState extends State<MapScreen> {
             'https://www.google.com/maps/search/?api=1'
             '&query=${spot.lat},${spot.lng}',
           );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Install a browser or Google Maps to open this location.'),
+          backgroundColor: AppColors.warningAmber,
+        ),
+      );
     }
   }
 
@@ -127,7 +134,31 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
 
-              // Safety score card removed — map tap no longer triggers it
+              // Safety score card — shown when map is tapped and no safe spot
+              // is selected. Uses the same Positioned(bottom:0) pattern as the
+              // safe-spot card below. The two are mutually exclusive because
+              // ssVm.clearSelection() is called on every map tap.
+              if (vm.selectedScore != null && ssVm.selectedSpot == null)
+                Positioned(
+                  bottom: 0, left: 0, right: 0,
+                  child: SafetyScoreCard(
+                    result: vm.selectedScore!,
+                    gridEntry: vm.selectedEntry,
+                    onClose: vm.clearSelection,
+                    onReportIncident: () {
+                      final pos = vm.center;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => IncidentScreen(
+                            latitude: pos.latitude,
+                            longitude: pos.longitude,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
 
               // ── Safe spot detail card ─────────────────────────────────────
               if (ssVm.selectedSpot != null)
@@ -189,7 +220,7 @@ class _MapScreenState extends State<MapScreen> {
         initialZoom: AppConstants.demoDefaultZoom,
         onTap: (_, latLng) {
           ssVm.clearSelection();
-          // Map tap only clears selection — no score card popup
+          vm.onMapTap(latLng);
         },
       ),
       children: [
@@ -631,28 +662,28 @@ class _MapScreenState extends State<MapScreen> {
                                 color: AppColors.safeGreen,
                                 fontWeight: FontWeight.w600),
                           ),
-                          if (spot.address.isNotEmpty)
-                            Text(
-                              spot.address,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black45),
-                            ),
+                          // if (spot.address.isNotEmpty)
+                            // Text(
+                            //   // spot.address,
+                            //   maxLines: 1,
+                            //   overflow: TextOverflow.ellipsis,
+                            //   style: const TextStyle(
+                            //       fontSize: 11,
+                            //       color: Colors.black45),
+                            // ),
                         ],
                       ),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            '${spot.distanceKm.toStringAsFixed(1)} km',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.safeGreen),
-                          ),
+                          // Text(
+                          //   '${spot.distanceKm.toStringAsFixed(1)} km',
+                          //   style: const TextStyle(
+                          //       fontSize: 12,
+                          //       fontWeight: FontWeight.w700,
+                          //       color: AppColors.safeGreen),
+                          // ),
                           Text(
                             '${(spot.safetyScore * 100).toStringAsFixed(0)}% safe',
                             style: const TextStyle(

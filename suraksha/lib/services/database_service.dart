@@ -15,10 +15,18 @@ class IncidentOutbox extends Table {
   TextColumn get localId => text()();
   RealColumn get latitude => real()();
   RealColumn get longitude => real()();
+  TextColumn get city => text().nullable()();
+  TextColumn get area => text().nullable()();
   TextColumn get crimeType => text()();
   TextColumn get description => text()();
+  RealColumn get lightingScore => real().withDefault(const Constant(3.0))();
+  RealColumn get policeStationDistanceKm => real().withDefault(const Constant(2.0))();
+  RealColumn get crowdDensity => real().withDefault(const Constant(300.0))();
+  IntColumn get crimeCount => integer().withDefault(const Constant(5))();
+  TextColumn get weatherCondition => text().withDefault(const Constant('Clear'))();
   TextColumn get timeOfDay => text()();
   DateTimeColumn get reportedAt => dateTime()();
+  DateTimeColumn get incidentTimestamp => dateTime().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
 
   @override
@@ -43,7 +51,25 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // v1 → v2: add new incident reporting fields
+            await m.addColumn(incidentOutbox, incidentOutbox.city);
+            await m.addColumn(incidentOutbox, incidentOutbox.area);
+            await m.addColumn(incidentOutbox, incidentOutbox.lightingScore);
+            await m.addColumn(incidentOutbox, incidentOutbox.policeStationDistanceKm);
+            await m.addColumn(incidentOutbox, incidentOutbox.crowdDensity);
+            await m.addColumn(incidentOutbox, incidentOutbox.crimeCount);
+            await m.addColumn(incidentOutbox, incidentOutbox.weatherCondition);
+            await m.addColumn(incidentOutbox, incidentOutbox.incidentTimestamp);
+          }
+        },
+      );
 
   // ── Incident outbox ──────────────────────────────────────────────────────────
 
@@ -53,10 +79,18 @@ class AppDatabase extends _$AppDatabase {
         localId: incident.localId,
         latitude: incident.latitude,
         longitude: incident.longitude,
+        city: Value(incident.city),
+        area: Value(incident.area),
         crimeType: incident.crimeType,
         description: incident.description,
+        lightingScore: Value(incident.lightingScore),
+        policeStationDistanceKm: Value(incident.policeStationDistanceKm),
+        crowdDensity: Value(incident.crowdDensity),
+        crimeCount: Value(incident.crimeCount),
+        weatherCondition: Value(incident.weatherCondition),
         timeOfDay: incident.timeOfDay,
         reportedAt: incident.reportedAt,
+        incidentTimestamp: Value(incident.incidentTimestamp),
       ),
     );
   }

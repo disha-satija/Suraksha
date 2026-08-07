@@ -64,25 +64,12 @@ class _RoutingScreenState extends State<RoutingScreen> {
       return;
     }
 
+    final mapVm = context.read<MapViewModel>();
     setState(() => _loadingSuggestions = true);
 
     final results = <_LocationSuggestion>[];
 
-    // 1. Local grid matches (always available — offline-safe)
-    final mapVm = context.read<MapViewModel>();
-    for (final entry in mapVm.grid) {
-      final name = '${entry.area}, ${entry.city}';
-      if (name.toLowerCase().contains(query.toLowerCase())) {
-        results.add(_LocationSuggestion(
-          label: name,
-          lat: entry.lat,
-          lng: entry.lng,
-          isGridEntry: true,
-        ));
-      }
-    }
-
-    // 2. Backend geocoding (online only)
+    // 1. Backend geocoding (online search — primary accurate results)
     try {
       final payload = await _api.get('/geocode/search', query: {'q': '$query, India', 'limit': 4});
       final data = payload['data'] as List<dynamic>? ?? [];
@@ -97,6 +84,19 @@ class _RoutingScreenState extends State<RoutingScreen> {
       }
     } catch (_) {
       // Offline or timed out — local results only
+    }
+
+    // 2. Local grid matches (fallback — offline-safe)
+    for (final entry in mapVm.grid) {
+      final name = '${entry.area}, ${entry.city}';
+      if (name.toLowerCase().contains(query.toLowerCase())) {
+        results.add(_LocationSuggestion(
+          label: name,
+          lat: entry.lat,
+          lng: entry.lng,
+          isGridEntry: true,
+        ));
+      }
     }
 
     if (mounted) {
@@ -141,8 +141,14 @@ class _RoutingScreenState extends State<RoutingScreen> {
     );
 
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Install a browser or Google Maps to open directions.'),
+            backgroundColor: AppColors.warningAmber,
+          ),
+        );
       }
     } catch (_) {
       if (mounted) {
@@ -186,6 +192,8 @@ class _RoutingScreenState extends State<RoutingScreen> {
                     toController: _toController,
                     fromFocus: _fromFocus,
                     toFocus: _toFocus,
+                    selectedProfile: routingVm.selectedProfile,
+                    onProfileChanged: (p) => routingVm.setProfile(p),
                     onFromChanged: (q) => _onSearchChanged(q, true),
                     onToChanged: (q) => _onSearchChanged(q, false),
                     onFromTap: () => setState(() {
@@ -239,7 +247,7 @@ class _RoutingScreenState extends State<RoutingScreen> {
                         _toController.text = demo.label.contains('→')
                             ? demo.label.split('→')[1].trim()
                             : '';
-                        routingVm.loadDemoRoute(demo);
+                        routingVm.loadDemoRoute(demo, mapVm.grid);
                         setState(() => _suggestions = []);
                       },
                     ),
@@ -404,6 +412,8 @@ class _SearchPanel extends StatelessWidget {
   final TextEditingController toController;
   final FocusNode fromFocus;
   final FocusNode toFocus;
+  final String selectedProfile;
+  final ValueChanged<String> onProfileChanged;
   final ValueChanged<String> onFromChanged;
   final ValueChanged<String> onToChanged;
   final VoidCallback onFromTap;
@@ -416,6 +426,8 @@ class _SearchPanel extends StatelessWidget {
     required this.toController,
     required this.fromFocus,
     required this.toFocus,
+    required this.selectedProfile,
+    required this.onProfileChanged,
     required this.onFromChanged,
     required this.onToChanged,
     required this.onFromTap,
@@ -429,68 +441,102 @@ class _SearchPanel extends StatelessWidget {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
+      child: Column(
         children: [
-          // Input column
-          Expanded(
-            child: Column(
-              children: [
-                // Pickup field
-                _LocationField(
-                  controller: fromController,
-                  focusNode: fromFocus,
-                  hint: 'Pickup point',
-                  icon: Icons.trip_origin,
-                  iconColor: AppColors.primary,
-                  onChanged: onFromChanged,
-                  onTap: onFromTap,
-                ),
-                const SizedBox(height: 8),
-                // Drop-off field
-                _LocationField(
-                  controller: toController,
-                  focusNode: toFocus,
-                  hint: 'Drop-off point',
-                  icon: Icons.location_pin,
-                  iconColor: AppColors.dangerRed,
-                  onChanged: onToChanged,
-                  onTap: onToTap,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Swap + search buttons
-          Column(
+          Row(
             children: [
-              // Swap
-              GestureDetector(
-                onTap: onSwap,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.swap_vert,
-                      color: AppColors.primary, size: 20),
+              // Input column
+              Expanded(
+                child: Column(
+                  children: [
+                    // Pickup field
+                    _LocationField(
+                      controller: fromController,
+                      focusNode: fromFocus,
+                      hint: 'Pickup point',
+                      icon: Icons.trip_origin,
+                      iconColor: AppColors.primary,
+                      onChanged: onFromChanged,
+                      onTap: onFromTap,
+                    ),
+                    const SizedBox(height: 8),
+                    // Drop-off field
+                    _LocationField(
+                      controller: toController,
+                      focusNode: toFocus,
+                      hint: 'Drop-off point',
+                      icon: Icons.location_pin,
+                      iconColor: AppColors.dangerRed,
+                      onChanged: onToChanged,
+                      onTap: onToTap,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              // Search
-              GestureDetector(
-                onTap: onSearch,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
+              const SizedBox(width: 8),
+
+              // Swap + search buttons
+              Column(
+                children: [
+                  // Swap
+                  GestureDetector(
+                    onTap: onSwap,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.swap_vert,
+                          color: AppColors.primary, size: 20),
+                    ),
                   ),
-                  child: const Icon(Icons.search,
-                      color: Colors.white, size: 20),
+                  const SizedBox(height: 8),
+                  // Search
+                  GestureDetector(
+                    onTap: onSearch,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.search,
+                          color: Colors.white, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Profile toggle (Driving vs Walking)
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: 'driving',
+                      label: Text('Driving'),
+                      icon: Icon(Icons.directions_car, size: 16),
+                    ),
+                    ButtonSegment(
+                      value: 'walking',
+                      label: Text('Walking'),
+                      icon: Icon(Icons.directions_walk, size: 16),
+                    ),
+                  ],
+                  selected: {selectedProfile},
+                  onSelectionChanged: (set) {
+                    if (set.isNotEmpty) onProfileChanged(set.first);
+                  },
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ),
             ],

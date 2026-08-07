@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import '../models/safety_grid_entry.dart';
 import '../models/safety_score_result.dart';
@@ -188,10 +189,14 @@ class SafetyRepository {
     const r = 6371.0;
     final dLat = _toRad(lat2 - lat1);
     final dLon = _toRad(lon2 - lon1);
-    final a = (dLat / 2).abs() * (dLat / 2).abs() +
-        (dLon / 2).abs() * (dLon / 2).abs();
-    return r * 2 * (a < 1 ? a : 1);
+    final sinDLat = math.sin(dLat / 2);
+    final sinDLon = math.sin(dLon / 2);
+    final a = sinDLat * sinDLat +
+        math.cos(_toRad(lat1)) * math.cos(_toRad(lat2)) *
+        sinDLon * sinDLon;
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return r * c;
   }
 
-  double _toRad(double deg) => deg * 3.14159265358979 / 180;
+  double _toRad(double deg) => deg * math.pi / 180;
 }

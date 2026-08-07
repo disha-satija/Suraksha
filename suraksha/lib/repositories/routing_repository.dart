@@ -24,6 +24,7 @@ class RoutingRepository {
     required LatLng start,
     required LatLng end,
     required List<SafetyGridEntry> grid,
+    String profile = 'driving',
   }) async {
     if (_connectivity.isOnline) {
       try {
@@ -31,6 +32,7 @@ class RoutingRepository {
           start: start,
           end: end,
           grid: grid,
+          profile: profile,
         );
       } catch (_) {
         // Fall through to cached
@@ -62,5 +64,9 @@ class RoutingRepository {
 
   bool hasDeviated(LatLng currentPosition, List<LatLng> plannedPolyline) {
     return _routingService.hasDeviated(currentPosition, plannedPolyline);
+  }
+
+  RouteExplanation buildExplanation(List<LatLng> polyline, List<SafetyGridEntry> grid, double score) {
+    return _routingService.buildExplanationForRoute(polyline, grid, score);
   }
 }

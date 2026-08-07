@@ -18,15 +18,30 @@ class IncidentRepository {
         _connectivity = connectivity;
 
   /// Save an incident locally and attempt immediate sync if online.
-  Future<void> reportIncident(Incident incident) async {
+  /// Returns the server response map (with safetyScore/riskLevel) on success,
+  /// or null if the device is offline (will sync later).
+  Future<Map<String, dynamic>?> reportIncident(Incident incident) async {
     await _db.insertIncident(incident);
     if (_connectivity.isOnline) {
-      await _syncPending();
+      return _syncSingle(incident);
+    }
+    return null;
+  }
+
+  /// Sync a single incident to the backend immediately.
+  Future<Map<String, dynamic>?> _syncSingle(Incident incident) async {
+    try {
+      final response = await _supabase.syncIncident(incident);
+      await _db.markIncidentSynced(incident.localId);
+      return response;
+    } catch (_) {
+      // Leave as unsynced — will retry next time
+      return null;
     }
   }
 
-  /// Push all unsynced local incidents to Supabase.
-  Future<void> _syncPending() async {
+  /// Push all unsynced local incidents to the backend.
+  Future<void> syncPending() async {
     final pending = await _db.getUnsyncedIncidents();
     for (final row in pending) {
       try {
@@ -34,10 +49,18 @@ class IncidentRepository {
           localId: row.localId,
           latitude: row.latitude,
           longitude: row.longitude,
+          city: row.city,
+          area: row.area,
           crimeType: row.crimeType,
           description: row.description,
+          lightingScore: row.lightingScore,
+          policeStationDistanceKm: row.policeStationDistanceKm,
+          crowdDensity: row.crowdDensity,
+          crimeCount: row.crimeCount,
+          weatherCondition: row.weatherCondition,
           timeOfDay: row.timeOfDay,
           reportedAt: row.reportedAt,
+          incidentTimestamp: row.incidentTimestamp,
           isSynced: false,
         );
         await _supabase.syncIncident(incident);
@@ -49,5 +72,5 @@ class IncidentRepository {
   }
 
   /// Call this when connectivity is restored.
-  Future<void> syncOnConnectivityRestore() => _syncPending();
+  Future<void> syncOnConnectivityRestore() => syncPending();
 }

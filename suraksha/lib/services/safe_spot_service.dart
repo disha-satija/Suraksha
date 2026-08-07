@@ -11,8 +11,8 @@ class SafeSpotService {
     required double lat,
     required double lng,
     required String locationLabel,
-    int radiusKm = 5,
-    int maxResults = 8,
+    int radiusKm = 50,
+    int maxResults = 5,
   }) async {
     final payload = await _api.get('/safety/safe-spots', query: {
       'lat': lat,
@@ -27,5 +27,21 @@ class SafeSpotService {
       json['distance_km'] = distanceM / 1000;
       return SafeSpot.fromJson(json, originLat: lat, originLng: lng);
     }).toList();
+  }
+
+  /// Returns the single closest safe spot from SafeSpots_Delhi.
+  Future<SafeSpot?> getTopSafeSpot({
+    required double lat,
+    required double lng,
+    int radiusKm = 50,
+  }) async {
+    final payload = await _api.get('/safety/top-safe-spot', query: {
+      'lat': lat,
+      'lng': lng,
+      'radiusM': radiusKm * 1000,
+    });
+    final data = payload['data'] as Map<String, dynamic>?;
+    if (data == null) return null;
+    return SafeSpot.fromJson(data, originLat: lat, originLng: lng);
   }
 }

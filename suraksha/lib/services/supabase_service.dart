@@ -25,8 +25,10 @@ class SupabaseService {
     await Supabase.instance.client.auth.signOut();
   }
 
-  Future<void> syncIncident(Incident incident) async {
-    await _api.post('/incidents/sync', incident.toSupabaseJson());
+  /// Syncs an incident to the backend.
+  /// Returns the server response map containing [safetyScore] and [riskLevel].
+  Future<Map<String, dynamic>> syncIncident(Incident incident) async {
+    return _api.post('/incidents/sync', incident.toSyncJson());
   }
 
   Future<void> updateUserLocation({
@@ -75,6 +77,12 @@ class SupabaseService {
 
   Future<Map<String, dynamic>> triggerSos({required double lat, required double lng, required String clientEventId, String? sessionId}) =>
       _api.post('/sos', {'clientEventId': clientEventId, 'latitude': lat, 'longitude': lng, 'sharingSessionId': sessionId});
+
+  /// Reverse-geocode a coordinate via the backend. Returns city and area strings.
+  Future<Map<String, dynamic>> reverseGeocode(double lat, double lng) async {
+    final result = await _api.get('/geocode/reverse', query: {'lat': lat, 'lng': lng});
+    return result['data'] as Map<String, dynamic>? ?? {};
+  }
 
   /// Polls the secure public share endpoint. The token is not a user ID.
   Stream<Map<String, dynamic>> guardianLocationStream(String shareToken) async* {

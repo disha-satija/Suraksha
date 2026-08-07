@@ -8,7 +8,7 @@ class AppConstants {
   static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const String apiBaseUrl = String.fromEnvironment(
     'SURAKSHA_API_URL',
-    defaultValue: 'http://10.0.2.2:3000/api/v1',
+    defaultValue: 'http://10.7.10.138:3000/api/v1',
   );
 
   // ── Asset paths ───────────────────────────────────────────────────────────

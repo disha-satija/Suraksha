@@ -19,6 +19,8 @@ class RoutingViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _hasDeviated = false;
+  String _selectedProfile = 'driving';
+  List<SafetyGridEntry>? _lastGrid;
 
   LatLng? get startPoint => _startPoint;
   LatLng? get endPoint => _endPoint;
@@ -27,6 +29,7 @@ class RoutingViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasDeviated => _hasDeviated;
+  String get selectedProfile => _selectedProfile;
   List<DemoRoute> get demoRoutes => _routingRepo.demoRoutes;
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -41,8 +44,18 @@ class RoutingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setProfile(String profile) {
+    if (_selectedProfile == profile) return;
+    _selectedProfile = profile;
+    notifyListeners();
+    if (_startPoint != null && _endPoint != null && _lastGrid != null) {
+      fetchRoutes(_lastGrid!);
+    }
+  }
+
   Future<void> fetchRoutes(List<SafetyGridEntry> grid) async {
     if (_startPoint == null || _endPoint == null) return;
+    _lastGrid = grid;
     _isLoading = true;
     _error = null;
     _routes = [];
@@ -54,6 +67,7 @@ class RoutingViewModel extends ChangeNotifier {
         start: _startPoint!,
         end: _endPoint!,
         grid: grid,
+        profile: _selectedProfile,
       );
       if (_routes.isNotEmpty) {
         // Auto-select safest route
@@ -86,13 +100,24 @@ class RoutingViewModel extends ChangeNotifier {
   }
 
   /// Load a pre-cached demo route directly (for offline demo).
-  void loadDemoRoute(DemoRoute demo) {
+  void loadDemoRoute(DemoRoute demo, List<SafetyGridEntry> grid) {
     _startPoint = demo.start;
     _endPoint = demo.end;
-    _routes = demo.alternatives;
-    _selectedRoute = demo.alternatives.isNotEmpty
-        ? demo.alternatives.reduce((a, b) =>
-            a.safetyScore >= b.safetyScore ? a : b)
+    _routes = demo.alternatives.map((route) {
+      final xai = _routingRepo.buildExplanation(route.polyline, grid, route.safetyScore);
+      return RouteModel(
+        id: route.id,
+        polyline: route.polyline,
+        distanceMeters: route.distanceMeters,
+        durationSeconds: route.durationSeconds,
+        safetyScore: route.safetyScore,
+        riskLevel: route.riskLevel,
+        isCached: route.isCached,
+        explanation: xai,
+      );
+    }).toList();
+    _selectedRoute = _routes.isNotEmpty
+        ? _routes.reduce((a, b) => a.safetyScore >= b.safetyScore ? a : b)
         : null;
     notifyListeners();
   }

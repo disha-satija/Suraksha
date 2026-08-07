@@ -25,11 +25,12 @@ class RoutingService {
     required LatLng start,
     required LatLng end,
     required List<SafetyGridEntry> grid,
+    String profile = 'driving',
   }) async {
     final payload = await _api.post('/routes/plan', {
       'origin': {'lat': start.latitude, 'lng': start.longitude},
       'destination': {'lat': end.latitude, 'lng': end.longitude},
-      'profile': 'walking',
+      'profile': profile,
       'alternatives': true,
     });
     final routes = payload['data']?['routes'] as List<dynamic>? ?? [];
@@ -52,7 +53,13 @@ class RoutingService {
               avgPoliceDist: (serverExplanation['policeDistanceKm'] as num?)?.toDouble() ?? 3,
               avgCrowd: (serverExplanation['crowdDensity'] as num?)?.toDouble() ?? 400,
               avgCrimeCount: (serverExplanation['incidentCount'] as num?)?.toDouble() ?? 20,
-              summaryText: 'Server-scored safety route: ${(safetyScore * 100).toStringAsFixed(0)}/100.',
+              summaryText: (serverExplanation['summary'] as String?) ??
+                  'Server-scored safety route: ${(safetyScore * 100).toStringAsFixed(0)}/100.',
+              summary: serverExplanation['summary'] as String?,
+              lowLightingPoints: (serverExplanation['lowLightingPoints'] as num?)?.toInt(),
+              distantPolicePoints: (serverExplanation['distantPolicePoints'] as num?)?.toInt(),
+              highCrimePoints: (serverExplanation['highCrimePoints'] as num?)?.toInt(),
+              sampledPointsCount: (serverExplanation['sampledPointsCount'] as num?)?.toInt(),
               tips: (serverExplanation['tips'] as List<dynamic>? ?? []).cast<String>(),
             );
       return RouteModel(

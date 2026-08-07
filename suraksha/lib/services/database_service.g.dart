@@ -27,6 +27,16 @@ class $IncidentOutboxTable extends IncidentOutbox
   late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
       'longitude', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _cityMeta = const VerificationMeta('city');
+  @override
+  late final GeneratedColumn<String> city = GeneratedColumn<String>(
+      'city', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _areaMeta = const VerificationMeta('area');
+  @override
+  late final GeneratedColumn<String> area = GeneratedColumn<String>(
+      'area', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _crimeTypeMeta =
       const VerificationMeta('crimeType');
   @override
@@ -39,6 +49,46 @@ class $IncidentOutboxTable extends IncidentOutbox
   late final GeneratedColumn<String> description = GeneratedColumn<String>(
       'description', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lightingScoreMeta =
+      const VerificationMeta('lightingScore');
+  @override
+  late final GeneratedColumn<double> lightingScore = GeneratedColumn<double>(
+      'lighting_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(3.0));
+  static const VerificationMeta _policeStationDistanceKmMeta =
+      const VerificationMeta('policeStationDistanceKm');
+  @override
+  late final GeneratedColumn<double> policeStationDistanceKm =
+      GeneratedColumn<double>('police_station_distance_km', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(2.0));
+  static const VerificationMeta _crowdDensityMeta =
+      const VerificationMeta('crowdDensity');
+  @override
+  late final GeneratedColumn<double> crowdDensity = GeneratedColumn<double>(
+      'crowd_density', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(300.0));
+  static const VerificationMeta _crimeCountMeta =
+      const VerificationMeta('crimeCount');
+  @override
+  late final GeneratedColumn<int> crimeCount = GeneratedColumn<int>(
+      'crime_count', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(5));
+  static const VerificationMeta _weatherConditionMeta =
+      const VerificationMeta('weatherCondition');
+  @override
+  late final GeneratedColumn<String> weatherCondition = GeneratedColumn<String>(
+      'weather_condition', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Clear'));
   static const VerificationMeta _timeOfDayMeta =
       const VerificationMeta('timeOfDay');
   @override
@@ -51,6 +101,12 @@ class $IncidentOutboxTable extends IncidentOutbox
   late final GeneratedColumn<DateTime> reportedAt = GeneratedColumn<DateTime>(
       'reported_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _incidentTimestampMeta =
+      const VerificationMeta('incidentTimestamp');
+  @override
+  late final GeneratedColumn<DateTime> incidentTimestamp =
+      GeneratedColumn<DateTime>('incident_timestamp', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _isSyncedMeta =
       const VerificationMeta('isSynced');
   @override
@@ -66,10 +122,18 @@ class $IncidentOutboxTable extends IncidentOutbox
         localId,
         latitude,
         longitude,
+        city,
+        area,
         crimeType,
         description,
+        lightingScore,
+        policeStationDistanceKm,
+        crowdDensity,
+        crimeCount,
+        weatherCondition,
         timeOfDay,
         reportedAt,
+        incidentTimestamp,
         isSynced
       ];
   @override
@@ -100,6 +164,14 @@ class $IncidentOutboxTable extends IncidentOutbox
     } else if (isInserting) {
       context.missing(_longitudeMeta);
     }
+    if (data.containsKey('city')) {
+      context.handle(
+          _cityMeta, city.isAcceptableOrUnknown(data['city']!, _cityMeta));
+    }
+    if (data.containsKey('area')) {
+      context.handle(
+          _areaMeta, area.isAcceptableOrUnknown(data['area']!, _areaMeta));
+    }
     if (data.containsKey('crime_type')) {
       context.handle(_crimeTypeMeta,
           crimeType.isAcceptableOrUnknown(data['crime_type']!, _crimeTypeMeta));
@@ -113,6 +185,37 @@ class $IncidentOutboxTable extends IncidentOutbox
               data['description']!, _descriptionMeta));
     } else if (isInserting) {
       context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('lighting_score')) {
+      context.handle(
+          _lightingScoreMeta,
+          lightingScore.isAcceptableOrUnknown(
+              data['lighting_score']!, _lightingScoreMeta));
+    }
+    if (data.containsKey('police_station_distance_km')) {
+      context.handle(
+          _policeStationDistanceKmMeta,
+          policeStationDistanceKm.isAcceptableOrUnknown(
+              data['police_station_distance_km']!,
+              _policeStationDistanceKmMeta));
+    }
+    if (data.containsKey('crowd_density')) {
+      context.handle(
+          _crowdDensityMeta,
+          crowdDensity.isAcceptableOrUnknown(
+              data['crowd_density']!, _crowdDensityMeta));
+    }
+    if (data.containsKey('crime_count')) {
+      context.handle(
+          _crimeCountMeta,
+          crimeCount.isAcceptableOrUnknown(
+              data['crime_count']!, _crimeCountMeta));
+    }
+    if (data.containsKey('weather_condition')) {
+      context.handle(
+          _weatherConditionMeta,
+          weatherCondition.isAcceptableOrUnknown(
+              data['weather_condition']!, _weatherConditionMeta));
     }
     if (data.containsKey('time_of_day')) {
       context.handle(
@@ -129,6 +232,12 @@ class $IncidentOutboxTable extends IncidentOutbox
               data['reported_at']!, _reportedAtMeta));
     } else if (isInserting) {
       context.missing(_reportedAtMeta);
+    }
+    if (data.containsKey('incident_timestamp')) {
+      context.handle(
+          _incidentTimestampMeta,
+          incidentTimestamp.isAcceptableOrUnknown(
+              data['incident_timestamp']!, _incidentTimestampMeta));
     }
     if (data.containsKey('is_synced')) {
       context.handle(_isSyncedMeta,
@@ -149,14 +258,31 @@ class $IncidentOutboxTable extends IncidentOutbox
           .read(DriftSqlType.double, data['${effectivePrefix}latitude'])!,
       longitude: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}longitude'])!,
+      city: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}city']),
+      area: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}area']),
       crimeType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}crime_type'])!,
       description: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      lightingScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lighting_score'])!,
+      policeStationDistanceKm: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}police_station_distance_km'])!,
+      crowdDensity: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}crowd_density'])!,
+      crimeCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}crime_count'])!,
+      weatherCondition: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}weather_condition'])!,
       timeOfDay: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}time_of_day'])!,
       reportedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}reported_at'])!,
+      incidentTimestamp: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}incident_timestamp']),
       isSynced: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
     );
@@ -173,19 +299,35 @@ class IncidentOutboxData extends DataClass
   final String localId;
   final double latitude;
   final double longitude;
+  final String? city;
+  final String? area;
   final String crimeType;
   final String description;
+  final double lightingScore;
+  final double policeStationDistanceKm;
+  final double crowdDensity;
+  final int crimeCount;
+  final String weatherCondition;
   final String timeOfDay;
   final DateTime reportedAt;
+  final DateTime? incidentTimestamp;
   final bool isSynced;
   const IncidentOutboxData(
       {required this.localId,
       required this.latitude,
       required this.longitude,
+      this.city,
+      this.area,
       required this.crimeType,
       required this.description,
+      required this.lightingScore,
+      required this.policeStationDistanceKm,
+      required this.crowdDensity,
+      required this.crimeCount,
+      required this.weatherCondition,
       required this.timeOfDay,
       required this.reportedAt,
+      this.incidentTimestamp,
       required this.isSynced});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -193,10 +335,25 @@ class IncidentOutboxData extends DataClass
     map['local_id'] = Variable<String>(localId);
     map['latitude'] = Variable<double>(latitude);
     map['longitude'] = Variable<double>(longitude);
+    if (!nullToAbsent || city != null) {
+      map['city'] = Variable<String>(city);
+    }
+    if (!nullToAbsent || area != null) {
+      map['area'] = Variable<String>(area);
+    }
     map['crime_type'] = Variable<String>(crimeType);
     map['description'] = Variable<String>(description);
+    map['lighting_score'] = Variable<double>(lightingScore);
+    map['police_station_distance_km'] =
+        Variable<double>(policeStationDistanceKm);
+    map['crowd_density'] = Variable<double>(crowdDensity);
+    map['crime_count'] = Variable<int>(crimeCount);
+    map['weather_condition'] = Variable<String>(weatherCondition);
     map['time_of_day'] = Variable<String>(timeOfDay);
     map['reported_at'] = Variable<DateTime>(reportedAt);
+    if (!nullToAbsent || incidentTimestamp != null) {
+      map['incident_timestamp'] = Variable<DateTime>(incidentTimestamp);
+    }
     map['is_synced'] = Variable<bool>(isSynced);
     return map;
   }
@@ -206,10 +363,20 @@ class IncidentOutboxData extends DataClass
       localId: Value(localId),
       latitude: Value(latitude),
       longitude: Value(longitude),
+      city: city == null && nullToAbsent ? const Value.absent() : Value(city),
+      area: area == null && nullToAbsent ? const Value.absent() : Value(area),
       crimeType: Value(crimeType),
       description: Value(description),
+      lightingScore: Value(lightingScore),
+      policeStationDistanceKm: Value(policeStationDistanceKm),
+      crowdDensity: Value(crowdDensity),
+      crimeCount: Value(crimeCount),
+      weatherCondition: Value(weatherCondition),
       timeOfDay: Value(timeOfDay),
       reportedAt: Value(reportedAt),
+      incidentTimestamp: incidentTimestamp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(incidentTimestamp),
       isSynced: Value(isSynced),
     );
   }
@@ -221,10 +388,20 @@ class IncidentOutboxData extends DataClass
       localId: serializer.fromJson<String>(json['localId']),
       latitude: serializer.fromJson<double>(json['latitude']),
       longitude: serializer.fromJson<double>(json['longitude']),
+      city: serializer.fromJson<String?>(json['city']),
+      area: serializer.fromJson<String?>(json['area']),
       crimeType: serializer.fromJson<String>(json['crimeType']),
       description: serializer.fromJson<String>(json['description']),
+      lightingScore: serializer.fromJson<double>(json['lightingScore']),
+      policeStationDistanceKm:
+          serializer.fromJson<double>(json['policeStationDistanceKm']),
+      crowdDensity: serializer.fromJson<double>(json['crowdDensity']),
+      crimeCount: serializer.fromJson<int>(json['crimeCount']),
+      weatherCondition: serializer.fromJson<String>(json['weatherCondition']),
       timeOfDay: serializer.fromJson<String>(json['timeOfDay']),
       reportedAt: serializer.fromJson<DateTime>(json['reportedAt']),
+      incidentTimestamp:
+          serializer.fromJson<DateTime?>(json['incidentTimestamp']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
     );
   }
@@ -235,10 +412,19 @@ class IncidentOutboxData extends DataClass
       'localId': serializer.toJson<String>(localId),
       'latitude': serializer.toJson<double>(latitude),
       'longitude': serializer.toJson<double>(longitude),
+      'city': serializer.toJson<String?>(city),
+      'area': serializer.toJson<String?>(area),
       'crimeType': serializer.toJson<String>(crimeType),
       'description': serializer.toJson<String>(description),
+      'lightingScore': serializer.toJson<double>(lightingScore),
+      'policeStationDistanceKm':
+          serializer.toJson<double>(policeStationDistanceKm),
+      'crowdDensity': serializer.toJson<double>(crowdDensity),
+      'crimeCount': serializer.toJson<int>(crimeCount),
+      'weatherCondition': serializer.toJson<String>(weatherCondition),
       'timeOfDay': serializer.toJson<String>(timeOfDay),
       'reportedAt': serializer.toJson<DateTime>(reportedAt),
+      'incidentTimestamp': serializer.toJson<DateTime?>(incidentTimestamp),
       'isSynced': serializer.toJson<bool>(isSynced),
     };
   }
@@ -247,19 +433,38 @@ class IncidentOutboxData extends DataClass
           {String? localId,
           double? latitude,
           double? longitude,
+          Value<String?> city = const Value.absent(),
+          Value<String?> area = const Value.absent(),
           String? crimeType,
           String? description,
+          double? lightingScore,
+          double? policeStationDistanceKm,
+          double? crowdDensity,
+          int? crimeCount,
+          String? weatherCondition,
           String? timeOfDay,
           DateTime? reportedAt,
+          Value<DateTime?> incidentTimestamp = const Value.absent(),
           bool? isSynced}) =>
       IncidentOutboxData(
         localId: localId ?? this.localId,
         latitude: latitude ?? this.latitude,
         longitude: longitude ?? this.longitude,
+        city: city.present ? city.value : this.city,
+        area: area.present ? area.value : this.area,
         crimeType: crimeType ?? this.crimeType,
         description: description ?? this.description,
+        lightingScore: lightingScore ?? this.lightingScore,
+        policeStationDistanceKm:
+            policeStationDistanceKm ?? this.policeStationDistanceKm,
+        crowdDensity: crowdDensity ?? this.crowdDensity,
+        crimeCount: crimeCount ?? this.crimeCount,
+        weatherCondition: weatherCondition ?? this.weatherCondition,
         timeOfDay: timeOfDay ?? this.timeOfDay,
         reportedAt: reportedAt ?? this.reportedAt,
+        incidentTimestamp: incidentTimestamp.present
+            ? incidentTimestamp.value
+            : this.incidentTimestamp,
         isSynced: isSynced ?? this.isSynced,
       );
   IncidentOutboxData copyWithCompanion(IncidentOutboxCompanion data) {
@@ -267,12 +472,31 @@ class IncidentOutboxData extends DataClass
       localId: data.localId.present ? data.localId.value : this.localId,
       latitude: data.latitude.present ? data.latitude.value : this.latitude,
       longitude: data.longitude.present ? data.longitude.value : this.longitude,
+      city: data.city.present ? data.city.value : this.city,
+      area: data.area.present ? data.area.value : this.area,
       crimeType: data.crimeType.present ? data.crimeType.value : this.crimeType,
       description:
           data.description.present ? data.description.value : this.description,
+      lightingScore: data.lightingScore.present
+          ? data.lightingScore.value
+          : this.lightingScore,
+      policeStationDistanceKm: data.policeStationDistanceKm.present
+          ? data.policeStationDistanceKm.value
+          : this.policeStationDistanceKm,
+      crowdDensity: data.crowdDensity.present
+          ? data.crowdDensity.value
+          : this.crowdDensity,
+      crimeCount:
+          data.crimeCount.present ? data.crimeCount.value : this.crimeCount,
+      weatherCondition: data.weatherCondition.present
+          ? data.weatherCondition.value
+          : this.weatherCondition,
       timeOfDay: data.timeOfDay.present ? data.timeOfDay.value : this.timeOfDay,
       reportedAt:
           data.reportedAt.present ? data.reportedAt.value : this.reportedAt,
+      incidentTimestamp: data.incidentTimestamp.present
+          ? data.incidentTimestamp.value
+          : this.incidentTimestamp,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
     );
   }
@@ -283,18 +507,41 @@ class IncidentOutboxData extends DataClass
           ..write('localId: $localId, ')
           ..write('latitude: $latitude, ')
           ..write('longitude: $longitude, ')
+          ..write('city: $city, ')
+          ..write('area: $area, ')
           ..write('crimeType: $crimeType, ')
           ..write('description: $description, ')
+          ..write('lightingScore: $lightingScore, ')
+          ..write('policeStationDistanceKm: $policeStationDistanceKm, ')
+          ..write('crowdDensity: $crowdDensity, ')
+          ..write('crimeCount: $crimeCount, ')
+          ..write('weatherCondition: $weatherCondition, ')
           ..write('timeOfDay: $timeOfDay, ')
           ..write('reportedAt: $reportedAt, ')
+          ..write('incidentTimestamp: $incidentTimestamp, ')
           ..write('isSynced: $isSynced')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(localId, latitude, longitude, crimeType,
-      description, timeOfDay, reportedAt, isSynced);
+  int get hashCode => Object.hash(
+      localId,
+      latitude,
+      longitude,
+      city,
+      area,
+      crimeType,
+      description,
+      lightingScore,
+      policeStationDistanceKm,
+      crowdDensity,
+      crimeCount,
+      weatherCondition,
+      timeOfDay,
+      reportedAt,
+      incidentTimestamp,
+      isSynced);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -302,10 +549,18 @@ class IncidentOutboxData extends DataClass
           other.localId == this.localId &&
           other.latitude == this.latitude &&
           other.longitude == this.longitude &&
+          other.city == this.city &&
+          other.area == this.area &&
           other.crimeType == this.crimeType &&
           other.description == this.description &&
+          other.lightingScore == this.lightingScore &&
+          other.policeStationDistanceKm == this.policeStationDistanceKm &&
+          other.crowdDensity == this.crowdDensity &&
+          other.crimeCount == this.crimeCount &&
+          other.weatherCondition == this.weatherCondition &&
           other.timeOfDay == this.timeOfDay &&
           other.reportedAt == this.reportedAt &&
+          other.incidentTimestamp == this.incidentTimestamp &&
           other.isSynced == this.isSynced);
 }
 
@@ -313,20 +568,36 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
   final Value<String> localId;
   final Value<double> latitude;
   final Value<double> longitude;
+  final Value<String?> city;
+  final Value<String?> area;
   final Value<String> crimeType;
   final Value<String> description;
+  final Value<double> lightingScore;
+  final Value<double> policeStationDistanceKm;
+  final Value<double> crowdDensity;
+  final Value<int> crimeCount;
+  final Value<String> weatherCondition;
   final Value<String> timeOfDay;
   final Value<DateTime> reportedAt;
+  final Value<DateTime?> incidentTimestamp;
   final Value<bool> isSynced;
   final Value<int> rowid;
   const IncidentOutboxCompanion({
     this.localId = const Value.absent(),
     this.latitude = const Value.absent(),
     this.longitude = const Value.absent(),
+    this.city = const Value.absent(),
+    this.area = const Value.absent(),
     this.crimeType = const Value.absent(),
     this.description = const Value.absent(),
+    this.lightingScore = const Value.absent(),
+    this.policeStationDistanceKm = const Value.absent(),
+    this.crowdDensity = const Value.absent(),
+    this.crimeCount = const Value.absent(),
+    this.weatherCondition = const Value.absent(),
     this.timeOfDay = const Value.absent(),
     this.reportedAt = const Value.absent(),
+    this.incidentTimestamp = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -334,10 +605,18 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
     required String localId,
     required double latitude,
     required double longitude,
+    this.city = const Value.absent(),
+    this.area = const Value.absent(),
     required String crimeType,
     required String description,
+    this.lightingScore = const Value.absent(),
+    this.policeStationDistanceKm = const Value.absent(),
+    this.crowdDensity = const Value.absent(),
+    this.crimeCount = const Value.absent(),
+    this.weatherCondition = const Value.absent(),
     required String timeOfDay,
     required DateTime reportedAt,
+    this.incidentTimestamp = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : localId = Value(localId),
@@ -351,10 +630,18 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
     Expression<String>? localId,
     Expression<double>? latitude,
     Expression<double>? longitude,
+    Expression<String>? city,
+    Expression<String>? area,
     Expression<String>? crimeType,
     Expression<String>? description,
+    Expression<double>? lightingScore,
+    Expression<double>? policeStationDistanceKm,
+    Expression<double>? crowdDensity,
+    Expression<int>? crimeCount,
+    Expression<String>? weatherCondition,
     Expression<String>? timeOfDay,
     Expression<DateTime>? reportedAt,
+    Expression<DateTime>? incidentTimestamp,
     Expression<bool>? isSynced,
     Expression<int>? rowid,
   }) {
@@ -362,10 +649,19 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
       if (localId != null) 'local_id': localId,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      if (city != null) 'city': city,
+      if (area != null) 'area': area,
       if (crimeType != null) 'crime_type': crimeType,
       if (description != null) 'description': description,
+      if (lightingScore != null) 'lighting_score': lightingScore,
+      if (policeStationDistanceKm != null)
+        'police_station_distance_km': policeStationDistanceKm,
+      if (crowdDensity != null) 'crowd_density': crowdDensity,
+      if (crimeCount != null) 'crime_count': crimeCount,
+      if (weatherCondition != null) 'weather_condition': weatherCondition,
       if (timeOfDay != null) 'time_of_day': timeOfDay,
       if (reportedAt != null) 'reported_at': reportedAt,
+      if (incidentTimestamp != null) 'incident_timestamp': incidentTimestamp,
       if (isSynced != null) 'is_synced': isSynced,
       if (rowid != null) 'rowid': rowid,
     });
@@ -375,20 +671,37 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
       {Value<String>? localId,
       Value<double>? latitude,
       Value<double>? longitude,
+      Value<String?>? city,
+      Value<String?>? area,
       Value<String>? crimeType,
       Value<String>? description,
+      Value<double>? lightingScore,
+      Value<double>? policeStationDistanceKm,
+      Value<double>? crowdDensity,
+      Value<int>? crimeCount,
+      Value<String>? weatherCondition,
       Value<String>? timeOfDay,
       Value<DateTime>? reportedAt,
+      Value<DateTime?>? incidentTimestamp,
       Value<bool>? isSynced,
       Value<int>? rowid}) {
     return IncidentOutboxCompanion(
       localId: localId ?? this.localId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      city: city ?? this.city,
+      area: area ?? this.area,
       crimeType: crimeType ?? this.crimeType,
       description: description ?? this.description,
+      lightingScore: lightingScore ?? this.lightingScore,
+      policeStationDistanceKm:
+          policeStationDistanceKm ?? this.policeStationDistanceKm,
+      crowdDensity: crowdDensity ?? this.crowdDensity,
+      crimeCount: crimeCount ?? this.crimeCount,
+      weatherCondition: weatherCondition ?? this.weatherCondition,
       timeOfDay: timeOfDay ?? this.timeOfDay,
       reportedAt: reportedAt ?? this.reportedAt,
+      incidentTimestamp: incidentTimestamp ?? this.incidentTimestamp,
       isSynced: isSynced ?? this.isSynced,
       rowid: rowid ?? this.rowid,
     );
@@ -406,17 +719,42 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
     if (longitude.present) {
       map['longitude'] = Variable<double>(longitude.value);
     }
+    if (city.present) {
+      map['city'] = Variable<String>(city.value);
+    }
+    if (area.present) {
+      map['area'] = Variable<String>(area.value);
+    }
     if (crimeType.present) {
       map['crime_type'] = Variable<String>(crimeType.value);
     }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
+    if (lightingScore.present) {
+      map['lighting_score'] = Variable<double>(lightingScore.value);
+    }
+    if (policeStationDistanceKm.present) {
+      map['police_station_distance_km'] =
+          Variable<double>(policeStationDistanceKm.value);
+    }
+    if (crowdDensity.present) {
+      map['crowd_density'] = Variable<double>(crowdDensity.value);
+    }
+    if (crimeCount.present) {
+      map['crime_count'] = Variable<int>(crimeCount.value);
+    }
+    if (weatherCondition.present) {
+      map['weather_condition'] = Variable<String>(weatherCondition.value);
+    }
     if (timeOfDay.present) {
       map['time_of_day'] = Variable<String>(timeOfDay.value);
     }
     if (reportedAt.present) {
       map['reported_at'] = Variable<DateTime>(reportedAt.value);
+    }
+    if (incidentTimestamp.present) {
+      map['incident_timestamp'] = Variable<DateTime>(incidentTimestamp.value);
     }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
@@ -433,10 +771,18 @@ class IncidentOutboxCompanion extends UpdateCompanion<IncidentOutboxData> {
           ..write('localId: $localId, ')
           ..write('latitude: $latitude, ')
           ..write('longitude: $longitude, ')
+          ..write('city: $city, ')
+          ..write('area: $area, ')
           ..write('crimeType: $crimeType, ')
           ..write('description: $description, ')
+          ..write('lightingScore: $lightingScore, ')
+          ..write('policeStationDistanceKm: $policeStationDistanceKm, ')
+          ..write('crowdDensity: $crowdDensity, ')
+          ..write('crimeCount: $crimeCount, ')
+          ..write('weatherCondition: $weatherCondition, ')
           ..write('timeOfDay: $timeOfDay, ')
           ..write('reportedAt: $reportedAt, ')
+          ..write('incidentTimestamp: $incidentTimestamp, ')
           ..write('isSynced: $isSynced, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -779,10 +1125,18 @@ typedef $$IncidentOutboxTableCreateCompanionBuilder = IncidentOutboxCompanion
   required String localId,
   required double latitude,
   required double longitude,
+  Value<String?> city,
+  Value<String?> area,
   required String crimeType,
   required String description,
+  Value<double> lightingScore,
+  Value<double> policeStationDistanceKm,
+  Value<double> crowdDensity,
+  Value<int> crimeCount,
+  Value<String> weatherCondition,
   required String timeOfDay,
   required DateTime reportedAt,
+  Value<DateTime?> incidentTimestamp,
   Value<bool> isSynced,
   Value<int> rowid,
 });
@@ -791,10 +1145,18 @@ typedef $$IncidentOutboxTableUpdateCompanionBuilder = IncidentOutboxCompanion
   Value<String> localId,
   Value<double> latitude,
   Value<double> longitude,
+  Value<String?> city,
+  Value<String?> area,
   Value<String> crimeType,
   Value<String> description,
+  Value<double> lightingScore,
+  Value<double> policeStationDistanceKm,
+  Value<double> crowdDensity,
+  Value<int> crimeCount,
+  Value<String> weatherCondition,
   Value<String> timeOfDay,
   Value<DateTime> reportedAt,
+  Value<DateTime?> incidentTimestamp,
   Value<bool> isSynced,
   Value<int> rowid,
 });
@@ -817,17 +1179,44 @@ class $$IncidentOutboxTableFilterComposer
   ColumnFilters<double> get longitude => $composableBuilder(
       column: $table.longitude, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get city => $composableBuilder(
+      column: $table.city, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get area => $composableBuilder(
+      column: $table.area, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get crimeType => $composableBuilder(
       column: $table.crimeType, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get description => $composableBuilder(
       column: $table.description, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get lightingScore => $composableBuilder(
+      column: $table.lightingScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get policeStationDistanceKm => $composableBuilder(
+      column: $table.policeStationDistanceKm,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get crowdDensity => $composableBuilder(
+      column: $table.crowdDensity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get crimeCount => $composableBuilder(
+      column: $table.crimeCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get weatherCondition => $composableBuilder(
+      column: $table.weatherCondition,
+      builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get timeOfDay => $composableBuilder(
       column: $table.timeOfDay, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get reportedAt => $composableBuilder(
       column: $table.reportedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get incidentTimestamp => $composableBuilder(
+      column: $table.incidentTimestamp,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
       column: $table.isSynced, builder: (column) => ColumnFilters(column));
@@ -851,17 +1240,46 @@ class $$IncidentOutboxTableOrderingComposer
   ColumnOrderings<double> get longitude => $composableBuilder(
       column: $table.longitude, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get city => $composableBuilder(
+      column: $table.city, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get area => $composableBuilder(
+      column: $table.area, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get crimeType => $composableBuilder(
       column: $table.crimeType, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get description => $composableBuilder(
       column: $table.description, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get lightingScore => $composableBuilder(
+      column: $table.lightingScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get policeStationDistanceKm => $composableBuilder(
+      column: $table.policeStationDistanceKm,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get crowdDensity => $composableBuilder(
+      column: $table.crowdDensity,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get crimeCount => $composableBuilder(
+      column: $table.crimeCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get weatherCondition => $composableBuilder(
+      column: $table.weatherCondition,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get timeOfDay => $composableBuilder(
       column: $table.timeOfDay, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get reportedAt => $composableBuilder(
       column: $table.reportedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get incidentTimestamp => $composableBuilder(
+      column: $table.incidentTimestamp,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get isSynced => $composableBuilder(
       column: $table.isSynced, builder: (column) => ColumnOrderings(column));
@@ -885,17 +1303,41 @@ class $$IncidentOutboxTableAnnotationComposer
   GeneratedColumn<double> get longitude =>
       $composableBuilder(column: $table.longitude, builder: (column) => column);
 
+  GeneratedColumn<String> get city =>
+      $composableBuilder(column: $table.city, builder: (column) => column);
+
+  GeneratedColumn<String> get area =>
+      $composableBuilder(column: $table.area, builder: (column) => column);
+
   GeneratedColumn<String> get crimeType =>
       $composableBuilder(column: $table.crimeType, builder: (column) => column);
 
   GeneratedColumn<String> get description => $composableBuilder(
       column: $table.description, builder: (column) => column);
 
+  GeneratedColumn<double> get lightingScore => $composableBuilder(
+      column: $table.lightingScore, builder: (column) => column);
+
+  GeneratedColumn<double> get policeStationDistanceKm => $composableBuilder(
+      column: $table.policeStationDistanceKm, builder: (column) => column);
+
+  GeneratedColumn<double> get crowdDensity => $composableBuilder(
+      column: $table.crowdDensity, builder: (column) => column);
+
+  GeneratedColumn<int> get crimeCount => $composableBuilder(
+      column: $table.crimeCount, builder: (column) => column);
+
+  GeneratedColumn<String> get weatherCondition => $composableBuilder(
+      column: $table.weatherCondition, builder: (column) => column);
+
   GeneratedColumn<String> get timeOfDay =>
       $composableBuilder(column: $table.timeOfDay, builder: (column) => column);
 
   GeneratedColumn<DateTime> get reportedAt => $composableBuilder(
       column: $table.reportedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get incidentTimestamp => $composableBuilder(
+      column: $table.incidentTimestamp, builder: (column) => column);
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
@@ -931,10 +1373,18 @@ class $$IncidentOutboxTableTableManager extends RootTableManager<
             Value<String> localId = const Value.absent(),
             Value<double> latitude = const Value.absent(),
             Value<double> longitude = const Value.absent(),
+            Value<String?> city = const Value.absent(),
+            Value<String?> area = const Value.absent(),
             Value<String> crimeType = const Value.absent(),
             Value<String> description = const Value.absent(),
+            Value<double> lightingScore = const Value.absent(),
+            Value<double> policeStationDistanceKm = const Value.absent(),
+            Value<double> crowdDensity = const Value.absent(),
+            Value<int> crimeCount = const Value.absent(),
+            Value<String> weatherCondition = const Value.absent(),
             Value<String> timeOfDay = const Value.absent(),
             Value<DateTime> reportedAt = const Value.absent(),
+            Value<DateTime?> incidentTimestamp = const Value.absent(),
             Value<bool> isSynced = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -942,10 +1392,18 @@ class $$IncidentOutboxTableTableManager extends RootTableManager<
             localId: localId,
             latitude: latitude,
             longitude: longitude,
+            city: city,
+            area: area,
             crimeType: crimeType,
             description: description,
+            lightingScore: lightingScore,
+            policeStationDistanceKm: policeStationDistanceKm,
+            crowdDensity: crowdDensity,
+            crimeCount: crimeCount,
+            weatherCondition: weatherCondition,
             timeOfDay: timeOfDay,
             reportedAt: reportedAt,
+            incidentTimestamp: incidentTimestamp,
             isSynced: isSynced,
             rowid: rowid,
           ),
@@ -953,10 +1411,18 @@ class $$IncidentOutboxTableTableManager extends RootTableManager<
             required String localId,
             required double latitude,
             required double longitude,
+            Value<String?> city = const Value.absent(),
+            Value<String?> area = const Value.absent(),
             required String crimeType,
             required String description,
+            Value<double> lightingScore = const Value.absent(),
+            Value<double> policeStationDistanceKm = const Value.absent(),
+            Value<double> crowdDensity = const Value.absent(),
+            Value<int> crimeCount = const Value.absent(),
+            Value<String> weatherCondition = const Value.absent(),
             required String timeOfDay,
             required DateTime reportedAt,
+            Value<DateTime?> incidentTimestamp = const Value.absent(),
             Value<bool> isSynced = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -964,10 +1430,18 @@ class $$IncidentOutboxTableTableManager extends RootTableManager<
             localId: localId,
             latitude: latitude,
             longitude: longitude,
+            city: city,
+            area: area,
             crimeType: crimeType,
             description: description,
+            lightingScore: lightingScore,
+            policeStationDistanceKm: policeStationDistanceKm,
+            crowdDensity: crowdDensity,
+            crimeCount: crimeCount,
+            weatherCondition: weatherCondition,
             timeOfDay: timeOfDay,
             reportedAt: reportedAt,
+            incidentTimestamp: incidentTimestamp,
             isSynced: isSynced,
             rowid: rowid,
           ),
