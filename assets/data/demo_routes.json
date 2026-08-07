@@ -1,0 +1,122 @@
+[
+  {
+    "id": "cp_to_saket",
+    "label": "Connaught Place → Saket",
+    "start": {"lat": 28.6304, "lng": 77.2177},
+    "end": {"lat": 28.5244, "lng": 77.2066},
+    "alternatives": [
+      {
+        "id": "cp_saket_1",
+        "polyline": [
+          {"lat": 28.6304, "lng": 77.2177},
+          {"lat": 28.6200, "lng": 77.2100},
+          {"lat": 28.6050, "lng": 77.2050},
+          {"lat": 28.5900, "lng": 77.2000},
+          {"lat": 28.5700, "lng": 77.1980},
+          {"lat": 28.5500, "lng": 77.1990},
+          {"lat": 28.5244, "lng": 77.2066}
+        ],
+        "distance_meters": 13200,
+        "duration_seconds": 1560,
+        "safety_score": 0.72,
+        "risk_level": "Medium"
+      },
+      {
+        "id": "cp_saket_2",
+        "polyline": [
+          {"lat": 28.6304, "lng": 77.2177},
+          {"lat": 28.6250, "lng": 77.2100},
+          {"lat": 28.6100, "lng": 77.2000},
+          {"lat": 28.5850, "lng": 77.1950},
+          {"lat": 28.5600, "lng": 77.1980},
+          {"lat": 28.5400, "lng": 77.2020},
+          {"lat": 28.5244, "lng": 77.2066}
+        ],
+        "distance_meters": 14100,
+        "duration_seconds": 1680,
+        "safety_score": 0.84,
+        "risk_level": "Low"
+      }
+    ]
+  },
+  {
+    "id": "dwarka_to_lajpat",
+    "label": "Dwarka → Lajpat Nagar",
+    "start": {"lat": 28.5921, "lng": 77.0460},
+    "end": {"lat": 28.5678, "lng": 77.2433},
+    "alternatives": [
+      {
+        "id": "dwarka_lajpat_1",
+        "polyline": [
+          {"lat": 28.5921, "lng": 77.0460},
+          {"lat": 28.5920, "lng": 77.0800},
+          {"lat": 28.5900, "lng": 77.1200},
+          {"lat": 28.5850, "lng": 77.1600},
+          {"lat": 28.5800, "lng": 77.2000},
+          {"lat": 28.5750, "lng": 77.2200},
+          {"lat": 28.5678, "lng": 77.2433}
+        ],
+        "distance_meters": 19800,
+        "duration_seconds": 2340,
+        "safety_score": 0.66,
+        "risk_level": "Medium"
+      },
+      {
+        "id": "dwarka_lajpat_2",
+        "polyline": [
+          {"lat": 28.5921, "lng": 77.0460},
+          {"lat": 28.5950, "lng": 77.0750},
+          {"lat": 28.6000, "lng": 77.1100},
+          {"lat": 28.6050, "lng": 77.1500},
+          {"lat": 28.6000, "lng": 77.1900},
+          {"lat": 28.5850, "lng": 77.2200},
+          {"lat": 28.5678, "lng": 77.2433}
+        ],
+        "distance_meters": 20500,
+        "duration_seconds": 2520,
+        "safety_score": 0.79,
+        "risk_level": "Low"
+      }
+    ]
+  },
+  {
+    "id": "rohini_to_karol_bagh",
+    "label": "Rohini → Karol Bagh",
+    "start": {"lat": 28.7495, "lng": 77.0707},
+    "end": {"lat": 28.6519, "lng": 77.1907},
+    "alternatives": [
+      {
+        "id": "rohini_kb_1",
+        "polyline": [
+          {"lat": 28.7495, "lng": 77.0707},
+          {"lat": 28.7400, "lng": 77.0900},
+          {"lat": 28.7200, "lng": 77.1100},
+          {"lat": 28.7000, "lng": 77.1350},
+          {"lat": 28.6800, "lng": 77.1600},
+          {"lat": 28.6650, "lng": 77.1750},
+          {"lat": 28.6519, "lng": 77.1907}
+        ],
+        "distance_meters": 16400,
+        "duration_seconds": 1920,
+        "safety_score": 0.81,
+        "risk_level": "Low"
+      },
+      {
+        "id": "rohini_kb_2",
+        "polyline": [
+          {"lat": 28.7495, "lng": 77.0707},
+          {"lat": 28.7300, "lng": 77.0850},
+          {"lat": 28.7100, "lng": 77.1050},
+          {"lat": 28.6900, "lng": 77.1300},
+          {"lat": 28.6700, "lng": 77.1550},
+          {"lat": 28.6600, "lng": 77.1700},
+          {"lat": 28.6519, "lng": 77.1907}
+        ],
+        "distance_meters": 15900,
+        "duration_seconds": 1860,
+        "safety_score": 0.58,
+        "risk_level": "Medium"
+      }
+    ]
+  }
+]

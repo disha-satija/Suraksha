@@ -1,0 +1,71 @@
+{
+  "model_type": "linear_regression",
+  "feature_names": [
+    "lighting_score",
+    "police_station_distance_km",
+    "crowd_density",
+    "crime_count",
+    "time_morning",
+    "time_afternoon",
+    "time_evening",
+    "time_night",
+    "time_late_night",
+    "weather_clear",
+    "weather_rainy",
+    "weather_foggy",
+    "weather_stormy",
+    "weather_humid"
+  ],
+  "numeric_features": [
+    "lighting_score",
+    "police_station_distance_km",
+    "crowd_density",
+    "crime_count"
+  ],
+  "time_features": [
+    "time_morning",
+    "time_afternoon",
+    "time_evening",
+    "time_night",
+    "time_late_night"
+  ],
+  "weather_features": [
+    "weather_clear",
+    "weather_rainy",
+    "weather_foggy",
+    "weather_stormy",
+    "weather_humid"
+  ],
+  "weights": [
+    0.11270509660243988,
+    -0.1308189183473587,
+    -0.000163326010806486,
+    -0.12568782269954681,
+    -0.0009661408257670701,
+    0.0011856884229928255,
+    -0.00036796138738282025,
+    -0.00013160142407286912,
+    0.00028000984457321465,
+    0.0004170546308159828,
+    0.0005922128912061453,
+    -0.0007837035227566957,
+    -0.0006572403362952173,
+    0.00043167892727069557
+  ],
+  "intercept": 0.7141268253326416,
+  "scaler_mean": [
+    5.493724999499321,
+    4.116744000507146,
+    505.14805,
+    32.35685
+  ],
+  "scaler_scale": [
+    2.5928888390759224,
+    2.2334841246166905,
+    284.97140809421126,
+    17.145737315073386
+  ],
+  "n_features": 14,
+  "r2_score": 0.9655,
+  "mae": 0.0282
+}
