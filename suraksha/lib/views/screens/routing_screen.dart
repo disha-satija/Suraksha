@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/routing_viewmodel.dart';
 import '../../viewmodels/map_viewmodel.dart';
+import '../../viewmodels/guardian_viewmodel.dart';
 import '../../models/route_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/api_client.dart';
@@ -46,8 +48,23 @@ class _RoutingScreenState extends State<RoutingScreen> {
   bool _loadingSuggestions = false;
   final ApiClient _api = ApiClient();
 
+  /// Delays the lookup until typing pauses. Without this every keystroke hit
+  /// the geocoder — typing one query fired ~45 requests and earned an HTTP 429
+  /// for the whole app, since Nominatim allows 1 request/second and forbids
+  /// per-keystroke autocomplete.
+  Timer? _searchDebounce;
+  static const Duration _searchDebounceDelay = Duration(milliseconds: 400);
+
+  /// Below this, a query matches too much to be useful and only costs quota.
+  static const int _minSearchLength = 3;
+
+  /// Incremented per search so a slow earlier response cannot overwrite the
+  /// suggestions from a later, more specific query.
+  int _searchSeq = 0;
+
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _fromController.dispose();
     _toController.dispose();
     _fromFocus.dispose();
@@ -57,21 +74,43 @@ class _RoutingScreenState extends State<RoutingScreen> {
 
   // ── Suggestion search ─────────────────────────────────────────────────────
 
-  Future<void> _onSearchChanged(String query, bool isFrom) async {
+  /// Called on every keystroke. Cheap: it only schedules the real lookup.
+  void _onSearchChanged(String query, bool isFrom) {
+    _searchDebounce?.cancel();
     setState(() => _searchingFrom = isFrom);
-    if (query.trim().length < 2) {
-      setState(() => _suggestions = []);
+
+    final trimmed = query.trim();
+    if (trimmed.length < _minSearchLength) {
+      // Clear immediately — no request, and no stale suggestions left on screen.
+      setState(() {
+        _suggestions = [];
+        _loadingSuggestions = false;
+      });
       return;
     }
 
-    final mapVm = context.read<MapViewModel>();
+    // Local grid matches are free, so show them straight away rather than
+    // making the user wait out the debounce for offline-available results.
     setState(() => _loadingSuggestions = true);
+    _searchDebounce = Timer(_searchDebounceDelay, () => _runSearch(trimmed, isFrom));
+  }
+
+  Future<void> _runSearch(String query, bool isFrom) async {
+    final seq = ++_searchSeq;
+    final mapVm = context.read<MapViewModel>();
 
     final results = <_LocationSuggestion>[];
 
     // 1. Backend geocoding (online search — primary accurate results)
     try {
-      final payload = await _api.get('/geocode/search', query: {'q': '$query, India', 'limit': 4});
+      final payload = await _api.get('/geocode/search', query: {
+        'q': query,
+        'limit': 4,
+        // Bias to India at the API level. Appending ", India" to the query text
+        // instead made Nominatim parse it as a structured address, so specific
+        // searches like "paytm sector 98, India" matched nothing at all.
+        'country': 'in',
+      });
       final data = payload['data'] as List<dynamic>? ?? [];
       for (final raw in data) {
         final item = Map<String, dynamic>.from(raw as Map);
@@ -99,12 +138,16 @@ class _RoutingScreenState extends State<RoutingScreen> {
       }
     }
 
-    if (mounted) {
-      setState(() {
-        _suggestions = results.take(6).toList();
-        _loadingSuggestions = false;
-      });
-    }
+    // Drop the result if a newer search has started since this one was issued —
+    // otherwise a slow response for "pay" can overwrite the results for
+    // "paytm sector 98".
+    if (!mounted || seq != _searchSeq) return;
+
+    setState(() {
+      _suggestions = results.take(6).toList();
+      _loadingSuggestions = false;
+      _searchingFrom = isFrom;
+    });
   }
 
   void _selectSuggestion(_LocationSuggestion s, RoutingViewModel vm) {
@@ -130,6 +173,19 @@ class _RoutingScreenState extends State<RoutingScreen> {
     final start = vm.startPoint;
     final end = vm.endPoint;
     if (start == null || end == null) return;
+
+    // ── Fire Twilio journey alert to guardian (non-blocking) ───────────
+    unawaited(
+      context.read<GuardianViewModel>().notifyJourneyStarted(
+        originLat: start.latitude,
+        originLng: start.longitude,
+        originLabel: _fromController.text.trim(),
+        destLat: end.latitude,
+        destLng: end.longitude,
+        destLabel: _toController.text.trim(),
+        safetyScore: vm.selectedRoute?.safetyScore,
+      ),
+    );
 
     // Google Maps directions URL — opens the native app if installed,
     // falls back to maps.google.com in browser

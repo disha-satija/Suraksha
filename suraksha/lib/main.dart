@@ -6,6 +6,7 @@ import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_constants.dart';
 import 'core/map_tile_provider.dart';
+import 'services/api_client.dart';
 import 'services/onnx_service.dart';
 import 'services/database_service.dart';
 import 'services/supabase_service.dart';
@@ -78,7 +79,15 @@ Future<void> main() async {
   // ── Build repositories ──────────────────────────────────────────────────────
   final supabaseService = SupabaseService();
 
-  final safetyRepo = SafetyRepository(onnxService: onnxService);
+  // The API client lets the home dashboard read live safety cells (which carry
+  // community-reported incidents) and fall back to a server-side AI estimate
+  // where the trained grid has no coverage. Both are optional: without a
+  // network the repository still answers from the bundled grid.
+  final safetyRepo = SafetyRepository(
+    onnxService: onnxService,
+    api: ApiClient(),
+    connectivity: connectivityService,
+  );
 
   // Load the bundled safety grid up front — the home dashboard, safe-spot
   // fallback, and routing suggestions all read it, not just the map tab.
@@ -109,7 +118,9 @@ Future<void> main() async {
     connectivity: connectivityService,
   );
 
-  final safeSpotService = SafeSpotService(safetyRepo: safetyRepo);
+  // `db` lets safe spots downloaded with an offline map region be read back
+  // when there is no connection.
+  final safeSpotService = SafeSpotService(safetyRepo: safetyRepo, db: db);
 
   // ── Sync on connectivity restore ────────────────────────────────────────────
   connectivityService.statusStream.listen((status) {
@@ -142,6 +153,8 @@ Future<void> main() async {
           create: (_) => GuardianViewModel(
             guardianRepo: guardianRepo,
             connectivity: connectivityService,
+            supabase: supabaseService,
+            settings: settingsService,
           ),
         ),
         ChangeNotifierProvider(

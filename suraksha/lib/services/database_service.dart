@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:drift/drift.dart';
@@ -77,6 +78,32 @@ class SafeSpotSubmissions extends Table {
   Set<Column> get primaryKey => {localId};
 }
 
+/// Verified safe places bundled for offline use alongside downloaded map tiles.
+///
+/// Only ever holds spots the backend confirmed as verified — AI-suggested
+/// places are excluded server-side, because a cached suggestion is
+/// indistinguishable from a cached fact once the device is offline.
+@DataClassName('CachedSafeSpotsData')
+class CachedSafeSpots extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get category => text()();
+  TextColumn get address => text()();
+  RealColumn get lat => real()();
+  RealColumn get lng => real()();
+  RealColumn get safetyScore => real()();
+  TextColumn get whySafe => text()();
+  TextColumn get operatingHours => text().nullable()();
+  TextColumn get contactNumber => text().nullable()();
+
+  /// 'curated' or 'provider' — never an AI suggestion.
+  TextColumn get source => text()();
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 // ── Database ───────────────────────────────────────────────────────────────────
 
 @DriftDatabase(tables: [
@@ -84,17 +111,56 @@ class SafeSpotSubmissions extends Table {
   LocationQueue,
   SafeSpotVerifications,
   SafeSpotSubmissions,
+  CachedSafeSpots,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Opens the database over a caller-supplied executor. Used by tests to
+  /// exercise the migration path against an in-memory database.
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
+        onCreate: (m) async {
+          debugPrint('[AppDatabase] creating schema v$schemaVersion');
+          await m.createAll();
+        },
+
+        // Runs on every open, after any create/upgrade. Self-healing net:
+        // if the recorded schema version says the database is current but a
+        // table is actually missing, recreate it.
+        //
+        // This exists because that is precisely the state a commented-out
+        // `createTable` left devices in — version bumped, table absent — and
+        // the only symptom was an exception swallowed three layers up. Version
+        // bookkeeping is not evidence that the tables exist, so check.
+        //
+        // createAll() emits CREATE TABLE IF NOT EXISTS, so repairing is safe
+        // and never touches existing data.
+        beforeOpen: (details) async {
+          final expected = allTables.map((t) => t.actualTableName).toSet();
+          final rows = await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get();
+          final present = rows.map((r) => r.read<String>('name')).toSet();
+          final missing = expected.difference(present);
+
+          if (missing.isNotEmpty) {
+            debugPrint(
+              '[AppDatabase] schema v${details.versionNow} is missing '
+              '${missing.length} table(s): ${missing.join(', ')} — repairing',
+            );
+            await createMigrator().createAll();
+            debugPrint('[AppDatabase] repair complete');
+          }
+        },
+
         onUpgrade: (m, from, to) async {
+          debugPrint('[AppDatabase] migrating v$from -> v$to');
           if (from < 2) {
             // v1 → v2: add new incident reporting fields
             await m.addColumn(incidentOutbox, incidentOutbox.city);
@@ -110,9 +176,29 @@ class AppDatabase extends _$AppDatabase {
             // v2 → v3: community safe-spot verifications
             await m.createTable(safeSpotVerifications);
           }
-          if (from < 4) {
-            // v3 → v4: user-suggested safe places awaiting moderation
+          if (from < 5) {
+            // v4 → v5: user-suggested safe places awaiting moderation.
+            //
+            // This table was supposed to be created at v4, but the call was
+            // left commented out while the version was still bumped. Every
+            // device that upgraded through v4 therefore has no local
+            // `safe_spot_submissions` table.
+            //
+            // ContributeRepository.submitSafeSpot writes to the local outbox
+            // BEFORE attempting to sync, so the missing table threw first and
+            // the backend POST was never reached — which is why submissions
+            // produced no API call in the logs and no row in Supabase, while
+            // verifications (whose table was created correctly at v3) synced
+            // fine. Fresh installs were unaffected because onCreate runs
+            // createAll().
+            //
+            // Safe to run for any `from`: drift emits CREATE TABLE IF NOT
+            // EXISTS, so devices that already have the table are unaffected.
             await m.createTable(safeSpotSubmissions);
+          }
+          if (from < 6) {
+            // v5 → v6: verified safe places bundled with offline map regions.
+            await m.createTable(cachedSafeSpots);
           }
         },
       );
@@ -297,6 +383,33 @@ class AppDatabase extends _$AppDatabase {
             ))
         .toList();
   }
+
+  // ── Cached safe spots (offline regions) ──────────────────────────────────────
+
+  /// Upserts verified safe spots downloaded for a region.
+  ///
+  /// Upsert rather than replace, so downloading a second region does not wipe
+  /// the first — a user who bundled two cities keeps both.
+  Future<int> upsertCachedSafeSpots(List<CachedSafeSpotsCompanion> spots) async {
+    if (spots.isEmpty) return 0;
+    await batch((b) => b.insertAllOnConflictUpdate(cachedSafeSpots, spots));
+    return spots.length;
+  }
+
+  /// All cached spots, nearest first.
+  ///
+  /// Sorting happens in Dart because SQLite has no haversine and the cache is
+  /// small by construction — the entire verified dataset is under 200 rows.
+  /// Revisit if that ever stops being true.
+  Future<List<CachedSafeSpotsData>> getCachedSafeSpots() =>
+      select(cachedSafeSpots).get();
+
+  Future<int> cachedSafeSpotCount() async {
+    final rows = await select(cachedSafeSpots).get();
+    return rows.length;
+  }
+
+  Future<void> clearCachedSafeSpots() => delete(cachedSafeSpots).go();
 }
 
 LazyDatabase _openConnection() {

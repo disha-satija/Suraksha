@@ -225,6 +225,29 @@ class SafeSpotViewModel extends ChangeNotifier {
     }
   }
 
+  // ── Offline region bundling ───────────────────────────────────────────────
+
+  /// Downloads the verified safe places inside a region and stores them on the
+  /// device, so they remain available with no connection.
+  ///
+  /// Returns how many were stored. Zero means the area has no verified safe
+  /// places in our coverage — not that the download failed.
+  Future<int> cacheRegionSafeSpots({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+  }) =>
+      _safeSpotService.cacheRegionSafeSpots(
+        minLat: minLat,
+        minLng: minLng,
+        maxLat: maxLat,
+        maxLng: maxLng,
+      );
+
+  /// How many verified safe places are bundled on this device right now.
+  Future<int> cachedSafeSpotCount() => _safeSpotService.cachedSafeSpotCount();
+
   // ── Selection ─────────────────────────────────────────────────────────────
 
   void selectSpot(SafeSpot spot) {

@@ -29,6 +29,7 @@ class MapViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   SafetyScoreResult? _areaScore;
+  bool _isFetchingAreaScore = false;
 
   LatLng get center => _center;
   double get zoom => _zoom;
@@ -60,19 +61,12 @@ class MapViewModel extends ChangeNotifier {
   void onMapTap(LatLng position) {
     _center = position;
 
-    // Find nearest grid entry first so we can pass its features to ONNX.
+    // Offline-only path: a map tap must stay synchronous. The repository runs
+    // its own nearest-area lookup and applies the distance gate.
     _selectedEntry = _findNearestGridEntry(position);
-    final entry = _selectedEntry;
-
     _selectedScore = _safetyRepo.getScore(
       lat: position.latitude,
       lng: position.longitude,
-      // Pass grid cell features so ONNX inference fires (safety_repository.dart:51-55
-      // requires all four non-null to use the model rather than the grid fallback).
-      lightingScore: entry?.avgLighting,
-      policeDistanceKm: entry?.avgPoliceDist,
-      crowdDensity: entry?.avgCrowd,
-      crimeCount: entry?.avgCrimeCount,
       timeOfDay: _currentTimeOfDay(),
       weatherCondition: 'Clear', // no weather API wired up; default is safe
     );
@@ -81,18 +75,26 @@ class MapViewModel extends ChangeNotifier {
 
   /// Scores the area the user is currently in, for the home dashboard.
   /// Independent of [selectedScore], which tracks map selection.
-  void refreshAreaScore(LatLng position) {
-    final entry = _findNearestGridEntry(position);
-    _areaScore = _safetyRepo.getScore(
-      lat: position.latitude,
-      lng: position.longitude,
-      lightingScore: entry?.avgLighting,
-      policeDistanceKm: entry?.avgPoliceDist,
-      crowdDensity: entry?.avgCrowd,
-      crimeCount: entry?.avgCrimeCount,
-      timeOfDay: _currentTimeOfDay(),
-      weatherCondition: 'Clear',
-    );
+  ///
+  /// Async because it prefers the backend when online: that is what surfaces
+  /// community-reported incidents, and what supplies a validated AI estimate
+  /// for locations the trained grid does not cover. Falls back to local data.
+  Future<void> refreshAreaScore(LatLng position) async {
+    // HomeScreen retries this on every rebuild while [areaScore] is still null.
+    // Without this guard the awaited network call would be fired once per
+    // frame until the first one returned.
+    if (_isFetchingAreaScore) return;
+    _isFetchingAreaScore = true;
+    try {
+      _areaScore = await _safetyRepo.getAreaScore(
+        lat: position.latitude,
+        lng: position.longitude,
+        timeOfDay: _currentTimeOfDay(),
+        weatherCondition: 'Clear',
+      );
+    } finally {
+      _isFetchingAreaScore = false;
+    }
     notifyListeners();
   }
 

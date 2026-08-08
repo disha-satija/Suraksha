@@ -1,11 +1,47 @@
-/// Result of on-device ONNX inference for a single location.
+/// Where a safety score actually came from.
+///
+/// This exists because the UI previously showed one badge ("Offline estimate")
+/// for every non-ONNX path, which told the user nothing true: it fired when the
+/// on-device model failed to load, regardless of network state, and it never
+/// distinguished a real nearby measurement from a distant guess.
+enum ScoreSource {
+  /// On-device ONNX ran against a nearby area's real features.
+  onDeviceModel,
+
+  /// Precomputed value from the bundled grid — the model was unavailable.
+  cachedGrid,
+
+  /// Live `safety_cells` value from the backend, including community reports.
+  remoteModel,
+
+  /// Validated AI estimate — the trained grid has no coverage here.
+  aiEstimate,
+
+  /// No usable data from any source.
+  unavailable,
+}
+
+/// Result of a safety lookup for a single location.
 /// Carries per-feature XAI contributions, natural language explanations,
 /// and an overall summary — all computable in Dart, fully offline.
 class SafetyScoreResult {
   final double score;
   final String riskLevel;
   final List<FeatureContribution> contributions;
-  final bool isFromCache;
+
+  /// Provenance of [score]. Drives the badge shown on the score card.
+  final ScoreSource source;
+
+  /// Name of the area this score describes, when one can be named honestly.
+  ///
+  /// Null when the nearest known area is too far away to stand in for the
+  /// user's location. Never assume this is the user's own locality — check
+  /// [referenceDistanceKm].
+  final String? areaLabel;
+
+  /// Distance from the queried point to [areaLabel]'s centroid, in km.
+  /// Null for sources that are not centroid-based (AI estimate, unavailable).
+  final double? referenceDistanceKm;
 
   /// One-sentence plain-English verdict shown at the top of the XAI panel.
   final String summaryExplanation;
@@ -17,10 +53,39 @@ class SafetyScoreResult {
     required this.score,
     required this.riskLevel,
     required this.contributions,
-    required this.isFromCache,
+    required this.source,
+    this.areaLabel,
+    this.referenceDistanceKm,
     this.summaryExplanation = '',
     this.improvementTips = const [],
   });
+
+  /// True when this score came from precomputed data rather than a live model.
+  /// Kept for existing call sites; prefer switching on [source].
+  bool get isFromCache => source == ScoreSource.cachedGrid;
+
+  /// Short provenance label for the score card badge.
+  String get sourceLabel {
+    switch (source) {
+      case ScoreSource.onDeviceModel:
+        return 'On-device AI';
+      case ScoreSource.cachedGrid:
+        return 'Offline data';
+      case ScoreSource.remoteModel:
+        return 'Live community data';
+      case ScoreSource.aiEstimate:
+        return 'AI estimate';
+      case ScoreSource.unavailable:
+        return 'No data';
+    }
+  }
+
+  /// Whether this score is precise enough to act on, or only indicative.
+  /// AI estimates and distant grid references are indicative only.
+  bool get isIndicativeOnly =>
+      source == ScoreSource.aiEstimate ||
+      source == ScoreSource.unavailable ||
+      (referenceDistanceKm != null && referenceDistanceKm! > 3.0);
 
   String get riskLabel {
     if (score >= 0.75) return 'Low Risk';

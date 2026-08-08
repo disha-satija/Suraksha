@@ -158,7 +158,7 @@ class OnnxService {
       score: score,
       riskLevel: riskLevel,
       contributions: contributions,
-      isFromCache: false,
+      source: ScoreSource.onDeviceModel,
       summaryExplanation: summary,
       improvementTips: tips,
     );

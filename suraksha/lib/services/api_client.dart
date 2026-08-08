@@ -48,10 +48,15 @@ class ApiClient {
 
     final request = http.Request(method, uri)..headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
+    print('[ApiClient] -> $method $uri');
     final client = http.Client();
     late final http.Response response;
     try {
       response = await client.send(request).then(http.Response.fromStream);
+      print('[ApiClient] <- ${response.statusCode} $uri');
+    } catch (e) {
+      print('[ApiClient] ERROR $method $uri: $e');
+      rethrow;
     } finally {
       client.close();
     }

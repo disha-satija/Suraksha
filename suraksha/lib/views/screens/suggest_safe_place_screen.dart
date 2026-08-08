@@ -55,10 +55,24 @@ class _SuggestSafePlaceScreenState extends State<SuggestSafePlaceScreen> {
       status: 'pending',
     );
 
-    await context.read<ContributeViewModel>().submitSafeSpot(submission);
+    final stored =
+        await context.read<ContributeViewModel>().submitSafeSpot(submission);
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
+
+    // Only confirm what actually happened. This previously reported success
+    // unconditionally, which is why a broken local write went unnoticed:
+    // the user saw "pending approval" while nothing had been saved anywhere.
+    if (!stored) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't save your suggestion. Please try again."),
+          backgroundColor: AppColors.dangerRed,
+        ),
+      );
+      return; // Keep the form open so the input is not lost.
+    }
 
     if (Navigator.canPop(context)) {
       Navigator.pop(context);

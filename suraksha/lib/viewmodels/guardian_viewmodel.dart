@@ -4,15 +4,23 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/guardian.dart';
 import '../repositories/guardian_repository.dart';
+import '../services/supabase_service.dart';
+import '../services/settings_service.dart';
 
 class GuardianViewModel extends ChangeNotifier {
   final GuardianRepository _guardianRepo;
+  final SupabaseService _supabase;
+  final SettingsService _settings;
 
   GuardianViewModel({
     required GuardianRepository guardianRepo,
+    required SupabaseService supabase,
+    required SettingsService settings,
     // connectivity kept in constructor signature for DI compatibility
     required dynamic connectivity,
-  })  : _guardianRepo = guardianRepo;
+  })  : _guardianRepo = guardianRepo,
+        _supabase = supabase,
+        _settings = settings;
 
   // ── State ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +145,37 @@ class GuardianViewModel extends ChangeNotifier {
   void clearSmsFlag() {
     _smsSent = false;
     notifyListeners();
+  }
+
+  // ── Journey alert ─────────────────────────────────────────────────────────
+
+  /// Fires a Twilio SMS to all active guardians when the user starts a journey.
+  /// Never throws — silently swallowed so it never blocks navigation.
+  Future<void> notifyJourneyStarted({
+    required double originLat,
+    required double originLng,
+    String originLabel = '',
+    required double destLat,
+    required double destLng,
+    String destLabel = '',
+    double? safetyScore,
+  }) async {
+    if (!SupabaseService.isInitialized) return;
+    try {
+      final name = _settings.getUserName();
+      await _supabase.sendJourneyAlert(
+        userName: name.isNotEmpty ? name : 'Suraksha User',
+        originLat: originLat,
+        originLng: originLng,
+        originLabel: originLabel,
+        destLat: destLat,
+        destLng: destLng,
+        destLabel: destLabel,
+        safetyScore: safetyScore,
+      );
+    } catch (_) {
+      // Never block navigation for a notification failure.
+    }
   }
 
   @override

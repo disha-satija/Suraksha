@@ -103,20 +103,35 @@ class ContributeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Submit a user-suggested safe place. The row is persisted locally by the
-  /// repository before any remote sync is attempted, so a failure here never
-  /// loses the suggestion — just leaves it pending sync.
-  Future<void> submitSafeSpot(SafeSpotSubmission submission) async {
+  /// Submit a user-suggested safe place.
+  ///
+  /// Returns true when the suggestion was durably stored (locally at minimum —
+  /// a failed remote sync still counts, because the row stays queued). Returns
+  /// false only when nothing was stored at all, so the caller can avoid
+  /// telling the user their suggestion was received when it was not.
+  Future<bool> submitSafeSpot(SafeSpotSubmission submission) async {
+    var stored = false;
     try {
       await _repo.submitSafeSpot(submission);
-    } catch (_) {
-      // Already persisted locally — nothing further to do here.
+      stored = true;
+    } catch (e) {
+      debugPrint('[ContributeViewModel] submission was NOT stored: $e');
     }
+
+    try {
+      await loadMySubmissions();
+    } catch (e) {
+      // A refresh failure must not change the verdict on the write above.
+      debugPrint('[ContributeViewModel] could not refresh submissions: $e');
+    }
+
     notifyListeners();
+    return stored;
   }
 
-  /// Refresh this device's own suggestion history.
+  /// Refresh this device's own suggestion history and push any unsynced items.
   Future<void> loadMySubmissions() async {
+    await _repo.syncPending();
     _mySubmissions = await _repo.mySubmissions();
     notifyListeners();
   }

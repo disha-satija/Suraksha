@@ -95,7 +95,26 @@ class GuardianRepository {
     );
     await _db.insertLocationUpdate(update);
 
-    var backendDelivered = false;
+    // ── SOS: /sos/direct — no auth required, always works ─────────────────────
+    // Passes the guardian phone stored on device so the backend can call
+    // Twilio immediately without needing a Supabase session.
+    if (triggerSmsFallback && _connectivity.isOnline) {
+      final guardian = getGuardian();
+      if (guardian.isConfigured) {
+        try {
+          await _supabase.sendDirectSos(
+            guardianPhone: guardian.phone,
+            lat: lat,
+            lng: lng,
+            userName: _settings.getUserName(),
+          );
+        } catch (_) {
+          // best-effort — swallow so navigation/UI is never blocked
+        }
+      }
+    }
+
+    // ── Location sync (session-gated) ──────────────────────────────────
     if (_connectivity.isOnline && SupabaseService.isInitialized) {
       try {
         final sessionId = await _ensureSharingSession();
@@ -108,25 +127,10 @@ class GuardianRepository {
             recordedAt: now,
             accuracyM: accuracyM,
           );
-          if (triggerSmsFallback) await _supabase.triggerSos(lat: lat, lng: lng, clientEventId: localId, sessionId: sessionId);
           await _db.markLocationSynced(localId);
-          backendDelivered = true;
         }
       } catch (_) {
-        // Keep the local outbox and use native SMS as a last-resort SOS path.
-      }
-    }
-
-    if (triggerSmsFallback && !backendDelivered) {
-      final guardian = getGuardian();
-      if (guardian.isConfigured) {
-        await _sms.sendGuardianAlert(
-          guardianPhone: guardian.phone,
-          latitude: lat,
-          longitude: lng,
-          userName: _settings.getUserName(),
-          guardianName: guardian.name,
-        );
+        // Non-fatal — local outbox will sync on next connectivity restore.
       }
     }
   }

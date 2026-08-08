@@ -262,7 +262,7 @@ class _ScoreContent extends StatelessWidget {
                         color: AppColors.subtitle,
                         height: 1.4,
                       ),
-                      maxLines: 3,
+                      maxLines: 7,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -272,16 +272,18 @@ class _ScoreContent extends StatelessWidget {
           ],
         ),
         const Divider(height: 24, color: AppColors.border),
-        const Text(
-          'WHY THIS SCORE',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: AppColors.subtitle,
-          ),
-        ),
+        // Only claim to explain the score when there are measured features
+        // behind it. AI estimates and "no coverage" results have none.
         if (shownContributions.isNotEmpty) ...[
+          const Text(
+            'WHY THIS SCORE',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: AppColors.subtitle,
+            ),
+          ),
           const SizedBox(height: 8),
           ...shownContributions.map((c) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -316,20 +318,62 @@ class _ScoreContent extends StatelessWidget {
                 ),
               )),
         ],
-        if (result.isFromCache) ...[
-          const SizedBox(height: 4),
-          const Row(
-            children: [
-              Icon(Icons.offline_bolt_rounded,
-                  size: 13, color: AppColors.warningAmber),
-              SizedBox(width: 6),
-              Text(
-                'Offline estimate',
-                style: TextStyle(fontSize: 11, color: AppColors.warningAmber),
-              ),
-            ],
+        const SizedBox(height: 4),
+        _ScoreSourceBadge(source: result.source),
+      ],
+    );
+  }
+}
+
+/// States where the number actually came from.
+///
+/// The previous badge said "Offline estimate" for every non-ONNX result, which
+/// was wrong in both directions: it appeared when the device model simply
+/// failed to load (nothing to do with being offline), and it hid the difference
+/// between a real measurement, a distant fallback, and an AI guess.
+class _ScoreSourceBadge extends StatelessWidget {
+  final ScoreSource source;
+  const _ScoreSourceBadge({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    late final IconData icon;
+    late final Color color;
+    late final String label;
+
+    switch (source) {
+      case ScoreSource.remoteModel:
+        icon = Icons.groups_rounded;
+        color = AppColors.safeGreen;
+        label = 'Live data — includes community reports';
+      case ScoreSource.onDeviceModel:
+        icon = Icons.memory;
+        color = AppColors.safeGreen;
+        label = 'On-device AI';
+      case ScoreSource.cachedGrid:
+        icon = Icons.offline_bolt_rounded;
+        color = AppColors.warningAmber;
+        label = 'Offline data — on-device AI unavailable';
+      case ScoreSource.aiEstimate:
+        icon = Icons.auto_awesome;
+        color = AppColors.warningAmber;
+        label = 'AI estimate — not from the trained model';
+      case ScoreSource.unavailable:
+        icon = Icons.help_outline_rounded;
+        color = AppColors.subtitle;
+        label = 'No safety data for this location';
+    }
+
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color),
           ),
-        ],
+        ),
       ],
     );
   }

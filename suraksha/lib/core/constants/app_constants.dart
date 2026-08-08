@@ -8,7 +8,7 @@ class AppConstants {
   static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const String apiBaseUrl = String.fromEnvironment(
     'SURAKSHA_API_URL',
-    defaultValue: 'http://10.7.10.138:3000/api/v1',
+    defaultValue: 'http://172.20.10.4:3000/api/v1',
   );
 
   // ── Asset paths ───────────────────────────────────────────────────────────
@@ -39,6 +39,20 @@ class AppConstants {
   // ── Safety score thresholds ───────────────────────────────────────────────
   static const double safetyHighThreshold = 0.75;
   static const double safetyMediumThreshold = 0.50;
+
+  // ── Safety grid proximity gates ───────────────────────────────────────────
+  // The bundled grid holds ONE centroid per area (50 areas, 10 cities), so the
+  // nearest centroid can easily be a different part of the city. These gates
+  // stop the app from claiming you are somewhere you are not.
+  //
+  //   <= areaLabelMaxKm : close enough to name the area as "your area"
+  //   <= gridTrustMaxKm : usable as a nearby reference, but named as such
+  //    > gridTrustMaxKm : no local coverage — ask the backend instead
+  static const double areaLabelMaxKm = 3.0;
+  static const double gridTrustMaxKm = 8.0;
+
+  /// Sent to `GET /safety/score` so the server applies the same coverage gate.
+  static const int gridTrustMaxMeters = 8000;
 
   // ── Connectivity ──────────────────────────────────────────────────────────
   static const Duration syncRetryInterval = Duration(seconds: 30);

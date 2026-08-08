@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -6,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/map_viewmodel.dart';
 import '../../viewmodels/routing_viewmodel.dart';
 import '../../viewmodels/safe_spot_viewmodel.dart';
+import '../../viewmodels/guardian_viewmodel.dart';
 import '../../models/safe_spot.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
@@ -68,10 +70,25 @@ class _MapScreenState extends State<MapScreen> {
     _mapController.move(pos, zoom);
   }
 
-  // ── Open Google Maps to a destination from current location ───────────────
+  // ── Open Google Maps to a safe-spot destination from current location ──────
   Future<void> _openGoogleMapsTo(SafeSpot spot) async {
     final ssVm = context.read<SafeSpotViewModel>();
     final origin = ssVm.currentLocation;
+
+    // ── Notify guardian (non-blocking) ──────────────────────────────────
+    if (origin != null) {
+      unawaited(
+        context.read<GuardianViewModel>().notifyJourneyStarted(
+          originLat: origin.latitude,
+          originLng: origin.longitude,
+          originLabel: ssVm.locationLabel.isNotEmpty ? ssVm.locationLabel : '',
+          destLat: spot.lat,
+          destLng: spot.lng,
+          destLabel: spot.name,
+        ),
+      );
+    }
+
     final uri = origin != null
         ? Uri.parse(
             'https://www.google.com/maps/dir/?api=1'
@@ -102,6 +119,19 @@ class _MapScreenState extends State<MapScreen> {
           if (vm.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          // ── Auto-center on GPS location once it first resolves ───────────
+          // _hasCenteredOnLocation prevents repeated re-centering on rebuilds.
+          // Search / suggestion taps already call _moveTo() explicitly.
+          if (!_hasCenteredOnLocation && ssVm.currentLocation != null) {
+            _hasCenteredOnLocation = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _mapController.move(ssVm.currentLocation!, 14);
+              }
+            });
+          }
+
           return Stack(
             children: [
               // ── Map ──────────────────────────────────────────────────────

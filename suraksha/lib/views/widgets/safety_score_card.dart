@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/safety_score_result.dart';
 import '../../models/safety_grid_entry.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_constants.dart';
 
 /// Bottom sheet shown when user taps a location.
 /// Full XAI panel:
@@ -33,13 +34,49 @@ class SafetyScoreCard extends StatefulWidget {
 class _SafetyScoreCardState extends State<SafetyScoreCard> {
   bool _showDetails = false;
 
+  static IconData _sourceIcon(ScoreSource source) {
+    switch (source) {
+      case ScoreSource.remoteModel:
+        return Icons.groups_rounded;
+      case ScoreSource.onDeviceModel:
+        return Icons.memory;
+      case ScoreSource.cachedGrid:
+        return Icons.cached;
+      case ScoreSource.aiEstimate:
+        return Icons.auto_awesome;
+      case ScoreSource.unavailable:
+        return Icons.help_outline_rounded;
+    }
+  }
+
+  static Color _sourceColor(ScoreSource source) {
+    switch (source) {
+      case ScoreSource.remoteModel:
+      case ScoreSource.onDeviceModel:
+        return AppColors.safeGreen;
+      case ScoreSource.cachedGrid:
+      case ScoreSource.aiEstimate:
+        return AppColors.warningAmber;
+      case ScoreSource.unavailable:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final result = widget.result;
     final scoreColor = AppColors.forScore(result.score);
-    final areaLabel = widget.gridEntry != null
-        ? '${widget.gridEntry!.area}, ${widget.gridEntry!.city}'
-        : 'Selected Location';
+
+    // Name the area only when the nearest known centroid is actually close.
+    // The grid holds one point per area, so the nearest one can be most of a
+    // city away — titling the sheet with it claimed a location we do not know.
+    final entry = widget.gridEntry;
+    final referenceKm = result.referenceDistanceKm;
+    final isNamedArea = entry != null &&
+        referenceKm != null &&
+        referenceKm <= AppConstants.areaLabelMaxKm;
+    final areaLabel =
+        isNamedArea ? '${entry.area}, ${entry.city}' : 'Selected Location';
 
     return Container(
       constraints: BoxConstraints(
@@ -92,19 +129,24 @@ class _SafetyScoreCardState extends State<SafetyScoreCard> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Row(
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
                               children: [
                                 _StatusChip(
-                                  label: result.isFromCache
-                                      ? 'Cached data'
-                                      : 'Live AI score',
-                                  icon: result.isFromCache
-                                      ? Icons.cached
-                                      : Icons.memory,
-                                  color: result.isFromCache
-                                      ? Colors.grey
-                                      : AppColors.primary,
+                                  label: result.sourceLabel,
+                                  icon: _sourceIcon(result.source),
+                                  color: _sourceColor(result.source),
                                 ),
+                                // State the distance whenever the score comes
+                                // from an area that is not the user's own.
+                                if (!isNamedArea && entry != null && referenceKm != null)
+                                  _StatusChip(
+                                    label:
+                                        'Nearest data ${referenceKm.toStringAsFixed(0)} km away',
+                                    icon: Icons.near_me_outlined,
+                                    color: AppColors.warningAmber,
+                                  ),
                               ],
                             ),
                           ],

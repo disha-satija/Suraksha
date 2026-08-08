@@ -1503,6 +1503,1112 @@ class SafeSpotVerificationsCompanion
   }
 }
 
+class $SafeSpotSubmissionsTable extends SafeSpotSubmissions
+    with TableInfo<$SafeSpotSubmissionsTable, SafeSpotSubmissionsData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SafeSpotSubmissionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _localIdMeta =
+      const VerificationMeta('localId');
+  @override
+  late final GeneratedColumn<String> localId = GeneratedColumn<String>(
+      'local_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _addressMeta =
+      const VerificationMeta('address');
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+      'address', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+      'lat', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _lngMeta = const VerificationMeta('lng');
+  @override
+  late final GeneratedColumn<double> lng = GeneratedColumn<double>(
+      'lng', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _whySafeMeta =
+      const VerificationMeta('whySafe');
+  @override
+  late final GeneratedColumn<String> whySafe = GeneratedColumn<String>(
+      'why_safe', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _submittedAtMeta =
+      const VerificationMeta('submittedAt');
+  @override
+  late final GeneratedColumn<DateTime> submittedAt = GeneratedColumn<DateTime>(
+      'submitted_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _isSyncedMeta =
+      const VerificationMeta('isSynced');
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+      'is_synced', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        localId,
+        name,
+        category,
+        address,
+        lat,
+        lng,
+        whySafe,
+        submittedAt,
+        status,
+        isSynced
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'safe_spot_submissions';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<SafeSpotSubmissionsData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('local_id')) {
+      context.handle(_localIdMeta,
+          localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta));
+    } else if (isInserting) {
+      context.missing(_localIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('address')) {
+      context.handle(_addressMeta,
+          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
+    } else if (isInserting) {
+      context.missing(_addressMeta);
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+          _latMeta, lat.isAcceptableOrUnknown(data['lat']!, _latMeta));
+    } else if (isInserting) {
+      context.missing(_latMeta);
+    }
+    if (data.containsKey('lng')) {
+      context.handle(
+          _lngMeta, lng.isAcceptableOrUnknown(data['lng']!, _lngMeta));
+    } else if (isInserting) {
+      context.missing(_lngMeta);
+    }
+    if (data.containsKey('why_safe')) {
+      context.handle(_whySafeMeta,
+          whySafe.isAcceptableOrUnknown(data['why_safe']!, _whySafeMeta));
+    } else if (isInserting) {
+      context.missing(_whySafeMeta);
+    }
+    if (data.containsKey('submitted_at')) {
+      context.handle(
+          _submittedAtMeta,
+          submittedAt.isAcceptableOrUnknown(
+              data['submitted_at']!, _submittedAtMeta));
+    } else if (isInserting) {
+      context.missing(_submittedAtMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(_isSyncedMeta,
+          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {localId};
+  @override
+  SafeSpotSubmissionsData map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SafeSpotSubmissionsData(
+      localId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}local_id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      address: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address'])!,
+      lat: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lat'])!,
+      lng: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lng'])!,
+      whySafe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}why_safe'])!,
+      submittedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}submitted_at'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      isSynced: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
+    );
+  }
+
+  @override
+  $SafeSpotSubmissionsTable createAlias(String alias) {
+    return $SafeSpotSubmissionsTable(attachedDatabase, alias);
+  }
+}
+
+class SafeSpotSubmissionsData extends DataClass
+    implements Insertable<SafeSpotSubmissionsData> {
+  final String localId;
+  final String name;
+  final String category;
+  final String address;
+  final double lat;
+  final double lng;
+  final String whySafe;
+  final DateTime submittedAt;
+  final String status;
+  final bool isSynced;
+  const SafeSpotSubmissionsData(
+      {required this.localId,
+      required this.name,
+      required this.category,
+      required this.address,
+      required this.lat,
+      required this.lng,
+      required this.whySafe,
+      required this.submittedAt,
+      required this.status,
+      required this.isSynced});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['local_id'] = Variable<String>(localId);
+    map['name'] = Variable<String>(name);
+    map['category'] = Variable<String>(category);
+    map['address'] = Variable<String>(address);
+    map['lat'] = Variable<double>(lat);
+    map['lng'] = Variable<double>(lng);
+    map['why_safe'] = Variable<String>(whySafe);
+    map['submitted_at'] = Variable<DateTime>(submittedAt);
+    map['status'] = Variable<String>(status);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  SafeSpotSubmissionsCompanion toCompanion(bool nullToAbsent) {
+    return SafeSpotSubmissionsCompanion(
+      localId: Value(localId),
+      name: Value(name),
+      category: Value(category),
+      address: Value(address),
+      lat: Value(lat),
+      lng: Value(lng),
+      whySafe: Value(whySafe),
+      submittedAt: Value(submittedAt),
+      status: Value(status),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory SafeSpotSubmissionsData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SafeSpotSubmissionsData(
+      localId: serializer.fromJson<String>(json['localId']),
+      name: serializer.fromJson<String>(json['name']),
+      category: serializer.fromJson<String>(json['category']),
+      address: serializer.fromJson<String>(json['address']),
+      lat: serializer.fromJson<double>(json['lat']),
+      lng: serializer.fromJson<double>(json['lng']),
+      whySafe: serializer.fromJson<String>(json['whySafe']),
+      submittedAt: serializer.fromJson<DateTime>(json['submittedAt']),
+      status: serializer.fromJson<String>(json['status']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'localId': serializer.toJson<String>(localId),
+      'name': serializer.toJson<String>(name),
+      'category': serializer.toJson<String>(category),
+      'address': serializer.toJson<String>(address),
+      'lat': serializer.toJson<double>(lat),
+      'lng': serializer.toJson<double>(lng),
+      'whySafe': serializer.toJson<String>(whySafe),
+      'submittedAt': serializer.toJson<DateTime>(submittedAt),
+      'status': serializer.toJson<String>(status),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  SafeSpotSubmissionsData copyWith(
+          {String? localId,
+          String? name,
+          String? category,
+          String? address,
+          double? lat,
+          double? lng,
+          String? whySafe,
+          DateTime? submittedAt,
+          String? status,
+          bool? isSynced}) =>
+      SafeSpotSubmissionsData(
+        localId: localId ?? this.localId,
+        name: name ?? this.name,
+        category: category ?? this.category,
+        address: address ?? this.address,
+        lat: lat ?? this.lat,
+        lng: lng ?? this.lng,
+        whySafe: whySafe ?? this.whySafe,
+        submittedAt: submittedAt ?? this.submittedAt,
+        status: status ?? this.status,
+        isSynced: isSynced ?? this.isSynced,
+      );
+  SafeSpotSubmissionsData copyWithCompanion(SafeSpotSubmissionsCompanion data) {
+    return SafeSpotSubmissionsData(
+      localId: data.localId.present ? data.localId.value : this.localId,
+      name: data.name.present ? data.name.value : this.name,
+      category: data.category.present ? data.category.value : this.category,
+      address: data.address.present ? data.address.value : this.address,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lng: data.lng.present ? data.lng.value : this.lng,
+      whySafe: data.whySafe.present ? data.whySafe.value : this.whySafe,
+      submittedAt:
+          data.submittedAt.present ? data.submittedAt.value : this.submittedAt,
+      status: data.status.present ? data.status.value : this.status,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SafeSpotSubmissionsData(')
+          ..write('localId: $localId, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('address: $address, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('whySafe: $whySafe, ')
+          ..write('submittedAt: $submittedAt, ')
+          ..write('status: $status, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(localId, name, category, address, lat, lng,
+      whySafe, submittedAt, status, isSynced);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SafeSpotSubmissionsData &&
+          other.localId == this.localId &&
+          other.name == this.name &&
+          other.category == this.category &&
+          other.address == this.address &&
+          other.lat == this.lat &&
+          other.lng == this.lng &&
+          other.whySafe == this.whySafe &&
+          other.submittedAt == this.submittedAt &&
+          other.status == this.status &&
+          other.isSynced == this.isSynced);
+}
+
+class SafeSpotSubmissionsCompanion
+    extends UpdateCompanion<SafeSpotSubmissionsData> {
+  final Value<String> localId;
+  final Value<String> name;
+  final Value<String> category;
+  final Value<String> address;
+  final Value<double> lat;
+  final Value<double> lng;
+  final Value<String> whySafe;
+  final Value<DateTime> submittedAt;
+  final Value<String> status;
+  final Value<bool> isSynced;
+  final Value<int> rowid;
+  const SafeSpotSubmissionsCompanion({
+    this.localId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.category = const Value.absent(),
+    this.address = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.whySafe = const Value.absent(),
+    this.submittedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SafeSpotSubmissionsCompanion.insert({
+    required String localId,
+    required String name,
+    required String category,
+    required String address,
+    required double lat,
+    required double lng,
+    required String whySafe,
+    required DateTime submittedAt,
+    this.status = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : localId = Value(localId),
+        name = Value(name),
+        category = Value(category),
+        address = Value(address),
+        lat = Value(lat),
+        lng = Value(lng),
+        whySafe = Value(whySafe),
+        submittedAt = Value(submittedAt);
+  static Insertable<SafeSpotSubmissionsData> custom({
+    Expression<String>? localId,
+    Expression<String>? name,
+    Expression<String>? category,
+    Expression<String>? address,
+    Expression<double>? lat,
+    Expression<double>? lng,
+    Expression<String>? whySafe,
+    Expression<DateTime>? submittedAt,
+    Expression<String>? status,
+    Expression<bool>? isSynced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (localId != null) 'local_id': localId,
+      if (name != null) 'name': name,
+      if (category != null) 'category': category,
+      if (address != null) 'address': address,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (whySafe != null) 'why_safe': whySafe,
+      if (submittedAt != null) 'submitted_at': submittedAt,
+      if (status != null) 'status': status,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SafeSpotSubmissionsCompanion copyWith(
+      {Value<String>? localId,
+      Value<String>? name,
+      Value<String>? category,
+      Value<String>? address,
+      Value<double>? lat,
+      Value<double>? lng,
+      Value<String>? whySafe,
+      Value<DateTime>? submittedAt,
+      Value<String>? status,
+      Value<bool>? isSynced,
+      Value<int>? rowid}) {
+    return SafeSpotSubmissionsCompanion(
+      localId: localId ?? this.localId,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      address: address ?? this.address,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      whySafe: whySafe ?? this.whySafe,
+      submittedAt: submittedAt ?? this.submittedAt,
+      status: status ?? this.status,
+      isSynced: isSynced ?? this.isSynced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (localId.present) {
+      map['local_id'] = Variable<String>(localId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lng.present) {
+      map['lng'] = Variable<double>(lng.value);
+    }
+    if (whySafe.present) {
+      map['why_safe'] = Variable<String>(whySafe.value);
+    }
+    if (submittedAt.present) {
+      map['submitted_at'] = Variable<DateTime>(submittedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SafeSpotSubmissionsCompanion(')
+          ..write('localId: $localId, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('address: $address, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('whySafe: $whySafe, ')
+          ..write('submittedAt: $submittedAt, ')
+          ..write('status: $status, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedSafeSpotsTable extends CachedSafeSpots
+    with TableInfo<$CachedSafeSpotsTable, CachedSafeSpotsData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedSafeSpotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _addressMeta =
+      const VerificationMeta('address');
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+      'address', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+      'lat', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _lngMeta = const VerificationMeta('lng');
+  @override
+  late final GeneratedColumn<double> lng = GeneratedColumn<double>(
+      'lng', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _safetyScoreMeta =
+      const VerificationMeta('safetyScore');
+  @override
+  late final GeneratedColumn<double> safetyScore = GeneratedColumn<double>(
+      'safety_score', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _whySafeMeta =
+      const VerificationMeta('whySafe');
+  @override
+  late final GeneratedColumn<String> whySafe = GeneratedColumn<String>(
+      'why_safe', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _operatingHoursMeta =
+      const VerificationMeta('operatingHours');
+  @override
+  late final GeneratedColumn<String> operatingHours = GeneratedColumn<String>(
+      'operating_hours', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _contactNumberMeta =
+      const VerificationMeta('contactNumber');
+  @override
+  late final GeneratedColumn<String> contactNumber = GeneratedColumn<String>(
+      'contact_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _cachedAtMeta =
+      const VerificationMeta('cachedAt');
+  @override
+  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
+      'cached_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        category,
+        address,
+        lat,
+        lng,
+        safetyScore,
+        whySafe,
+        operatingHours,
+        contactNumber,
+        source,
+        cachedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_safe_spots';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedSafeSpotsData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('address')) {
+      context.handle(_addressMeta,
+          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
+    } else if (isInserting) {
+      context.missing(_addressMeta);
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+          _latMeta, lat.isAcceptableOrUnknown(data['lat']!, _latMeta));
+    } else if (isInserting) {
+      context.missing(_latMeta);
+    }
+    if (data.containsKey('lng')) {
+      context.handle(
+          _lngMeta, lng.isAcceptableOrUnknown(data['lng']!, _lngMeta));
+    } else if (isInserting) {
+      context.missing(_lngMeta);
+    }
+    if (data.containsKey('safety_score')) {
+      context.handle(
+          _safetyScoreMeta,
+          safetyScore.isAcceptableOrUnknown(
+              data['safety_score']!, _safetyScoreMeta));
+    } else if (isInserting) {
+      context.missing(_safetyScoreMeta);
+    }
+    if (data.containsKey('why_safe')) {
+      context.handle(_whySafeMeta,
+          whySafe.isAcceptableOrUnknown(data['why_safe']!, _whySafeMeta));
+    } else if (isInserting) {
+      context.missing(_whySafeMeta);
+    }
+    if (data.containsKey('operating_hours')) {
+      context.handle(
+          _operatingHoursMeta,
+          operatingHours.isAcceptableOrUnknown(
+              data['operating_hours']!, _operatingHoursMeta));
+    }
+    if (data.containsKey('contact_number')) {
+      context.handle(
+          _contactNumberMeta,
+          contactNumber.isAcceptableOrUnknown(
+              data['contact_number']!, _contactNumberMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(_cachedAtMeta,
+          cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta));
+    } else if (isInserting) {
+      context.missing(_cachedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedSafeSpotsData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedSafeSpotsData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      address: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address'])!,
+      lat: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lat'])!,
+      lng: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lng'])!,
+      safetyScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}safety_score'])!,
+      whySafe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}why_safe'])!,
+      operatingHours: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}operating_hours']),
+      contactNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}contact_number']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      cachedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}cached_at'])!,
+    );
+  }
+
+  @override
+  $CachedSafeSpotsTable createAlias(String alias) {
+    return $CachedSafeSpotsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedSafeSpotsData extends DataClass
+    implements Insertable<CachedSafeSpotsData> {
+  final String id;
+  final String name;
+  final String category;
+  final String address;
+  final double lat;
+  final double lng;
+  final double safetyScore;
+  final String whySafe;
+  final String? operatingHours;
+  final String? contactNumber;
+
+  /// 'curated' or 'provider' — never an AI suggestion.
+  final String source;
+  final DateTime cachedAt;
+  const CachedSafeSpotsData(
+      {required this.id,
+      required this.name,
+      required this.category,
+      required this.address,
+      required this.lat,
+      required this.lng,
+      required this.safetyScore,
+      required this.whySafe,
+      this.operatingHours,
+      this.contactNumber,
+      required this.source,
+      required this.cachedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['category'] = Variable<String>(category);
+    map['address'] = Variable<String>(address);
+    map['lat'] = Variable<double>(lat);
+    map['lng'] = Variable<double>(lng);
+    map['safety_score'] = Variable<double>(safetyScore);
+    map['why_safe'] = Variable<String>(whySafe);
+    if (!nullToAbsent || operatingHours != null) {
+      map['operating_hours'] = Variable<String>(operatingHours);
+    }
+    if (!nullToAbsent || contactNumber != null) {
+      map['contact_number'] = Variable<String>(contactNumber);
+    }
+    map['source'] = Variable<String>(source);
+    map['cached_at'] = Variable<DateTime>(cachedAt);
+    return map;
+  }
+
+  CachedSafeSpotsCompanion toCompanion(bool nullToAbsent) {
+    return CachedSafeSpotsCompanion(
+      id: Value(id),
+      name: Value(name),
+      category: Value(category),
+      address: Value(address),
+      lat: Value(lat),
+      lng: Value(lng),
+      safetyScore: Value(safetyScore),
+      whySafe: Value(whySafe),
+      operatingHours: operatingHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(operatingHours),
+      contactNumber: contactNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contactNumber),
+      source: Value(source),
+      cachedAt: Value(cachedAt),
+    );
+  }
+
+  factory CachedSafeSpotsData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedSafeSpotsData(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      category: serializer.fromJson<String>(json['category']),
+      address: serializer.fromJson<String>(json['address']),
+      lat: serializer.fromJson<double>(json['lat']),
+      lng: serializer.fromJson<double>(json['lng']),
+      safetyScore: serializer.fromJson<double>(json['safetyScore']),
+      whySafe: serializer.fromJson<String>(json['whySafe']),
+      operatingHours: serializer.fromJson<String?>(json['operatingHours']),
+      contactNumber: serializer.fromJson<String?>(json['contactNumber']),
+      source: serializer.fromJson<String>(json['source']),
+      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'category': serializer.toJson<String>(category),
+      'address': serializer.toJson<String>(address),
+      'lat': serializer.toJson<double>(lat),
+      'lng': serializer.toJson<double>(lng),
+      'safetyScore': serializer.toJson<double>(safetyScore),
+      'whySafe': serializer.toJson<String>(whySafe),
+      'operatingHours': serializer.toJson<String?>(operatingHours),
+      'contactNumber': serializer.toJson<String?>(contactNumber),
+      'source': serializer.toJson<String>(source),
+      'cachedAt': serializer.toJson<DateTime>(cachedAt),
+    };
+  }
+
+  CachedSafeSpotsData copyWith(
+          {String? id,
+          String? name,
+          String? category,
+          String? address,
+          double? lat,
+          double? lng,
+          double? safetyScore,
+          String? whySafe,
+          Value<String?> operatingHours = const Value.absent(),
+          Value<String?> contactNumber = const Value.absent(),
+          String? source,
+          DateTime? cachedAt}) =>
+      CachedSafeSpotsData(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        category: category ?? this.category,
+        address: address ?? this.address,
+        lat: lat ?? this.lat,
+        lng: lng ?? this.lng,
+        safetyScore: safetyScore ?? this.safetyScore,
+        whySafe: whySafe ?? this.whySafe,
+        operatingHours:
+            operatingHours.present ? operatingHours.value : this.operatingHours,
+        contactNumber:
+            contactNumber.present ? contactNumber.value : this.contactNumber,
+        source: source ?? this.source,
+        cachedAt: cachedAt ?? this.cachedAt,
+      );
+  CachedSafeSpotsData copyWithCompanion(CachedSafeSpotsCompanion data) {
+    return CachedSafeSpotsData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      category: data.category.present ? data.category.value : this.category,
+      address: data.address.present ? data.address.value : this.address,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lng: data.lng.present ? data.lng.value : this.lng,
+      safetyScore:
+          data.safetyScore.present ? data.safetyScore.value : this.safetyScore,
+      whySafe: data.whySafe.present ? data.whySafe.value : this.whySafe,
+      operatingHours: data.operatingHours.present
+          ? data.operatingHours.value
+          : this.operatingHours,
+      contactNumber: data.contactNumber.present
+          ? data.contactNumber.value
+          : this.contactNumber,
+      source: data.source.present ? data.source.value : this.source,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSafeSpotsData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('address: $address, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('safetyScore: $safetyScore, ')
+          ..write('whySafe: $whySafe, ')
+          ..write('operatingHours: $operatingHours, ')
+          ..write('contactNumber: $contactNumber, ')
+          ..write('source: $source, ')
+          ..write('cachedAt: $cachedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, category, address, lat, lng,
+      safetyScore, whySafe, operatingHours, contactNumber, source, cachedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedSafeSpotsData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.category == this.category &&
+          other.address == this.address &&
+          other.lat == this.lat &&
+          other.lng == this.lng &&
+          other.safetyScore == this.safetyScore &&
+          other.whySafe == this.whySafe &&
+          other.operatingHours == this.operatingHours &&
+          other.contactNumber == this.contactNumber &&
+          other.source == this.source &&
+          other.cachedAt == this.cachedAt);
+}
+
+class CachedSafeSpotsCompanion extends UpdateCompanion<CachedSafeSpotsData> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> category;
+  final Value<String> address;
+  final Value<double> lat;
+  final Value<double> lng;
+  final Value<double> safetyScore;
+  final Value<String> whySafe;
+  final Value<String?> operatingHours;
+  final Value<String?> contactNumber;
+  final Value<String> source;
+  final Value<DateTime> cachedAt;
+  final Value<int> rowid;
+  const CachedSafeSpotsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.category = const Value.absent(),
+    this.address = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.safetyScore = const Value.absent(),
+    this.whySafe = const Value.absent(),
+    this.operatingHours = const Value.absent(),
+    this.contactNumber = const Value.absent(),
+    this.source = const Value.absent(),
+    this.cachedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedSafeSpotsCompanion.insert({
+    required String id,
+    required String name,
+    required String category,
+    required String address,
+    required double lat,
+    required double lng,
+    required double safetyScore,
+    required String whySafe,
+    this.operatingHours = const Value.absent(),
+    this.contactNumber = const Value.absent(),
+    required String source,
+    required DateTime cachedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        category = Value(category),
+        address = Value(address),
+        lat = Value(lat),
+        lng = Value(lng),
+        safetyScore = Value(safetyScore),
+        whySafe = Value(whySafe),
+        source = Value(source),
+        cachedAt = Value(cachedAt);
+  static Insertable<CachedSafeSpotsData> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? category,
+    Expression<String>? address,
+    Expression<double>? lat,
+    Expression<double>? lng,
+    Expression<double>? safetyScore,
+    Expression<String>? whySafe,
+    Expression<String>? operatingHours,
+    Expression<String>? contactNumber,
+    Expression<String>? source,
+    Expression<DateTime>? cachedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (category != null) 'category': category,
+      if (address != null) 'address': address,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (safetyScore != null) 'safety_score': safetyScore,
+      if (whySafe != null) 'why_safe': whySafe,
+      if (operatingHours != null) 'operating_hours': operatingHours,
+      if (contactNumber != null) 'contact_number': contactNumber,
+      if (source != null) 'source': source,
+      if (cachedAt != null) 'cached_at': cachedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedSafeSpotsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? name,
+      Value<String>? category,
+      Value<String>? address,
+      Value<double>? lat,
+      Value<double>? lng,
+      Value<double>? safetyScore,
+      Value<String>? whySafe,
+      Value<String?>? operatingHours,
+      Value<String?>? contactNumber,
+      Value<String>? source,
+      Value<DateTime>? cachedAt,
+      Value<int>? rowid}) {
+    return CachedSafeSpotsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      address: address ?? this.address,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      safetyScore: safetyScore ?? this.safetyScore,
+      whySafe: whySafe ?? this.whySafe,
+      operatingHours: operatingHours ?? this.operatingHours,
+      contactNumber: contactNumber ?? this.contactNumber,
+      source: source ?? this.source,
+      cachedAt: cachedAt ?? this.cachedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lng.present) {
+      map['lng'] = Variable<double>(lng.value);
+    }
+    if (safetyScore.present) {
+      map['safety_score'] = Variable<double>(safetyScore.value);
+    }
+    if (whySafe.present) {
+      map['why_safe'] = Variable<String>(whySafe.value);
+    }
+    if (operatingHours.present) {
+      map['operating_hours'] = Variable<String>(operatingHours.value);
+    }
+    if (contactNumber.present) {
+      map['contact_number'] = Variable<String>(contactNumber.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<DateTime>(cachedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSafeSpotsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('address: $address, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('safetyScore: $safetyScore, ')
+          ..write('whySafe: $whySafe, ')
+          ..write('operatingHours: $operatingHours, ')
+          ..write('contactNumber: $contactNumber, ')
+          ..write('source: $source, ')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1510,12 +2616,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocationQueueTable locationQueue = $LocationQueueTable(this);
   late final $SafeSpotVerificationsTable safeSpotVerifications =
       $SafeSpotVerificationsTable(this);
+  late final $SafeSpotSubmissionsTable safeSpotSubmissions =
+      $SafeSpotSubmissionsTable(this);
+  late final $CachedSafeSpotsTable cachedSafeSpots =
+      $CachedSafeSpotsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [incidentOutbox, locationQueue, safeSpotVerifications];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        incidentOutbox,
+        locationQueue,
+        safeSpotVerifications,
+        safeSpotSubmissions,
+        cachedSafeSpots
+      ];
 }
 
 typedef $$IncidentOutboxTableCreateCompanionBuilder = IncidentOutboxCompanion
@@ -2248,6 +3363,541 @@ typedef $$SafeSpotVerificationsTableProcessedTableManager
         ),
         SafeSpotVerificationsData,
         PrefetchHooks Function()>;
+typedef $$SafeSpotSubmissionsTableCreateCompanionBuilder
+    = SafeSpotSubmissionsCompanion Function({
+  required String localId,
+  required String name,
+  required String category,
+  required String address,
+  required double lat,
+  required double lng,
+  required String whySafe,
+  required DateTime submittedAt,
+  Value<String> status,
+  Value<bool> isSynced,
+  Value<int> rowid,
+});
+typedef $$SafeSpotSubmissionsTableUpdateCompanionBuilder
+    = SafeSpotSubmissionsCompanion Function({
+  Value<String> localId,
+  Value<String> name,
+  Value<String> category,
+  Value<String> address,
+  Value<double> lat,
+  Value<double> lng,
+  Value<String> whySafe,
+  Value<DateTime> submittedAt,
+  Value<String> status,
+  Value<bool> isSynced,
+  Value<int> rowid,
+});
+
+class $$SafeSpotSubmissionsTableFilterComposer
+    extends Composer<_$AppDatabase, $SafeSpotSubmissionsTable> {
+  $$SafeSpotSubmissionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get localId => $composableBuilder(
+      column: $table.localId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get whySafe => $composableBuilder(
+      column: $table.whySafe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get submittedAt => $composableBuilder(
+      column: $table.submittedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+}
+
+class $$SafeSpotSubmissionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SafeSpotSubmissionsTable> {
+  $$SafeSpotSubmissionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get localId => $composableBuilder(
+      column: $table.localId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get whySafe => $composableBuilder(
+      column: $table.whySafe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get submittedAt => $composableBuilder(
+      column: $table.submittedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SafeSpotSubmissionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SafeSpotSubmissionsTable> {
+  $$SafeSpotSubmissionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get localId =>
+      $composableBuilder(column: $table.localId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lng =>
+      $composableBuilder(column: $table.lng, builder: (column) => column);
+
+  GeneratedColumn<String> get whySafe =>
+      $composableBuilder(column: $table.whySafe, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get submittedAt => $composableBuilder(
+      column: $table.submittedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$SafeSpotSubmissionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SafeSpotSubmissionsTable,
+    SafeSpotSubmissionsData,
+    $$SafeSpotSubmissionsTableFilterComposer,
+    $$SafeSpotSubmissionsTableOrderingComposer,
+    $$SafeSpotSubmissionsTableAnnotationComposer,
+    $$SafeSpotSubmissionsTableCreateCompanionBuilder,
+    $$SafeSpotSubmissionsTableUpdateCompanionBuilder,
+    (
+      SafeSpotSubmissionsData,
+      BaseReferences<_$AppDatabase, $SafeSpotSubmissionsTable,
+          SafeSpotSubmissionsData>
+    ),
+    SafeSpotSubmissionsData,
+    PrefetchHooks Function()> {
+  $$SafeSpotSubmissionsTableTableManager(
+      _$AppDatabase db, $SafeSpotSubmissionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SafeSpotSubmissionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SafeSpotSubmissionsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SafeSpotSubmissionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> localId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> address = const Value.absent(),
+            Value<double> lat = const Value.absent(),
+            Value<double> lng = const Value.absent(),
+            Value<String> whySafe = const Value.absent(),
+            Value<DateTime> submittedAt = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<bool> isSynced = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SafeSpotSubmissionsCompanion(
+            localId: localId,
+            name: name,
+            category: category,
+            address: address,
+            lat: lat,
+            lng: lng,
+            whySafe: whySafe,
+            submittedAt: submittedAt,
+            status: status,
+            isSynced: isSynced,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String localId,
+            required String name,
+            required String category,
+            required String address,
+            required double lat,
+            required double lng,
+            required String whySafe,
+            required DateTime submittedAt,
+            Value<String> status = const Value.absent(),
+            Value<bool> isSynced = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SafeSpotSubmissionsCompanion.insert(
+            localId: localId,
+            name: name,
+            category: category,
+            address: address,
+            lat: lat,
+            lng: lng,
+            whySafe: whySafe,
+            submittedAt: submittedAt,
+            status: status,
+            isSynced: isSynced,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SafeSpotSubmissionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SafeSpotSubmissionsTable,
+    SafeSpotSubmissionsData,
+    $$SafeSpotSubmissionsTableFilterComposer,
+    $$SafeSpotSubmissionsTableOrderingComposer,
+    $$SafeSpotSubmissionsTableAnnotationComposer,
+    $$SafeSpotSubmissionsTableCreateCompanionBuilder,
+    $$SafeSpotSubmissionsTableUpdateCompanionBuilder,
+    (
+      SafeSpotSubmissionsData,
+      BaseReferences<_$AppDatabase, $SafeSpotSubmissionsTable,
+          SafeSpotSubmissionsData>
+    ),
+    SafeSpotSubmissionsData,
+    PrefetchHooks Function()>;
+typedef $$CachedSafeSpotsTableCreateCompanionBuilder = CachedSafeSpotsCompanion
+    Function({
+  required String id,
+  required String name,
+  required String category,
+  required String address,
+  required double lat,
+  required double lng,
+  required double safetyScore,
+  required String whySafe,
+  Value<String?> operatingHours,
+  Value<String?> contactNumber,
+  required String source,
+  required DateTime cachedAt,
+  Value<int> rowid,
+});
+typedef $$CachedSafeSpotsTableUpdateCompanionBuilder = CachedSafeSpotsCompanion
+    Function({
+  Value<String> id,
+  Value<String> name,
+  Value<String> category,
+  Value<String> address,
+  Value<double> lat,
+  Value<double> lng,
+  Value<double> safetyScore,
+  Value<String> whySafe,
+  Value<String?> operatingHours,
+  Value<String?> contactNumber,
+  Value<String> source,
+  Value<DateTime> cachedAt,
+  Value<int> rowid,
+});
+
+class $$CachedSafeSpotsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedSafeSpotsTable> {
+  $$CachedSafeSpotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get safetyScore => $composableBuilder(
+      column: $table.safetyScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get whySafe => $composableBuilder(
+      column: $table.whySafe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get operatingHours => $composableBuilder(
+      column: $table.operatingHours,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get contactNumber => $composableBuilder(
+      column: $table.contactNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
+      column: $table.cachedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedSafeSpotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedSafeSpotsTable> {
+  $$CachedSafeSpotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get safetyScore => $composableBuilder(
+      column: $table.safetyScore, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get whySafe => $composableBuilder(
+      column: $table.whySafe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get operatingHours => $composableBuilder(
+      column: $table.operatingHours,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get contactNumber => $composableBuilder(
+      column: $table.contactNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
+      column: $table.cachedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedSafeSpotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedSafeSpotsTable> {
+  $$CachedSafeSpotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lng =>
+      $composableBuilder(column: $table.lng, builder: (column) => column);
+
+  GeneratedColumn<double> get safetyScore => $composableBuilder(
+      column: $table.safetyScore, builder: (column) => column);
+
+  GeneratedColumn<String> get whySafe =>
+      $composableBuilder(column: $table.whySafe, builder: (column) => column);
+
+  GeneratedColumn<String> get operatingHours => $composableBuilder(
+      column: $table.operatingHours, builder: (column) => column);
+
+  GeneratedColumn<String> get contactNumber => $composableBuilder(
+      column: $table.contactNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+}
+
+class $$CachedSafeSpotsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CachedSafeSpotsTable,
+    CachedSafeSpotsData,
+    $$CachedSafeSpotsTableFilterComposer,
+    $$CachedSafeSpotsTableOrderingComposer,
+    $$CachedSafeSpotsTableAnnotationComposer,
+    $$CachedSafeSpotsTableCreateCompanionBuilder,
+    $$CachedSafeSpotsTableUpdateCompanionBuilder,
+    (
+      CachedSafeSpotsData,
+      BaseReferences<_$AppDatabase, $CachedSafeSpotsTable, CachedSafeSpotsData>
+    ),
+    CachedSafeSpotsData,
+    PrefetchHooks Function()> {
+  $$CachedSafeSpotsTableTableManager(
+      _$AppDatabase db, $CachedSafeSpotsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedSafeSpotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedSafeSpotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedSafeSpotsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> address = const Value.absent(),
+            Value<double> lat = const Value.absent(),
+            Value<double> lng = const Value.absent(),
+            Value<double> safetyScore = const Value.absent(),
+            Value<String> whySafe = const Value.absent(),
+            Value<String?> operatingHours = const Value.absent(),
+            Value<String?> contactNumber = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<DateTime> cachedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedSafeSpotsCompanion(
+            id: id,
+            name: name,
+            category: category,
+            address: address,
+            lat: lat,
+            lng: lng,
+            safetyScore: safetyScore,
+            whySafe: whySafe,
+            operatingHours: operatingHours,
+            contactNumber: contactNumber,
+            source: source,
+            cachedAt: cachedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            required String category,
+            required String address,
+            required double lat,
+            required double lng,
+            required double safetyScore,
+            required String whySafe,
+            Value<String?> operatingHours = const Value.absent(),
+            Value<String?> contactNumber = const Value.absent(),
+            required String source,
+            required DateTime cachedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedSafeSpotsCompanion.insert(
+            id: id,
+            name: name,
+            category: category,
+            address: address,
+            lat: lat,
+            lng: lng,
+            safetyScore: safetyScore,
+            whySafe: whySafe,
+            operatingHours: operatingHours,
+            contactNumber: contactNumber,
+            source: source,
+            cachedAt: cachedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedSafeSpotsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CachedSafeSpotsTable,
+    CachedSafeSpotsData,
+    $$CachedSafeSpotsTableFilterComposer,
+    $$CachedSafeSpotsTableOrderingComposer,
+    $$CachedSafeSpotsTableAnnotationComposer,
+    $$CachedSafeSpotsTableCreateCompanionBuilder,
+    $$CachedSafeSpotsTableUpdateCompanionBuilder,
+    (
+      CachedSafeSpotsData,
+      BaseReferences<_$AppDatabase, $CachedSafeSpotsTable, CachedSafeSpotsData>
+    ),
+    CachedSafeSpotsData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2258,4 +3908,8 @@ class $AppDatabaseManager {
       $$LocationQueueTableTableManager(_db, _db.locationQueue);
   $$SafeSpotVerificationsTableTableManager get safeSpotVerifications =>
       $$SafeSpotVerificationsTableTableManager(_db, _db.safeSpotVerifications);
+  $$SafeSpotSubmissionsTableTableManager get safeSpotSubmissions =>
+      $$SafeSpotSubmissionsTableTableManager(_db, _db.safeSpotSubmissions);
+  $$CachedSafeSpotsTableTableManager get cachedSafeSpots =>
+      $$CachedSafeSpotsTableTableManager(_db, _db.cachedSafeSpots);
 }

@@ -87,8 +87,59 @@ class SupabaseService {
     });
   }
 
-  Future<Map<String, dynamic>> triggerSos({required double lat, required double lng, required String clientEventId, String? sessionId}) =>
-      _api.post('/sos', {'clientEventId': clientEventId, 'latitude': lat, 'longitude': lng, 'sharingSessionId': sessionId});
+  Future<Map<String, dynamic>> triggerSos({
+    required double lat,
+    required double lng,
+    required String clientEventId,
+    String? sessionId,
+    String? userName,
+  }) =>
+      _api.post('/sos', {
+        'clientEventId': clientEventId,
+        'latitude': lat,
+        'longitude': lng,
+        if (sessionId != null) 'sharingSessionId': sessionId,
+        if (userName != null && userName.isNotEmpty) 'message': 'User: $userName',
+      });
+
+  /// Unauthenticated SOS — sends Twilio SMS directly using the guardian's
+  /// phone stored on device. Used when there is no Supabase session.
+  Future<Map<String, dynamic>> sendDirectSos({
+    required String guardianPhone,
+    required double lat,
+    required double lng,
+    String? userName,
+  }) =>
+      _api.post('/sos/direct', {
+        'guardianPhone': guardianPhone,
+        'latitude': lat,
+        'longitude': lng,
+        if (userName != null && userName.isNotEmpty) 'userName': userName,
+      });
+
+  /// Fires a Twilio SMS to all active guardians notifying them the user has
+  /// started a journey. Silent failure — never blocks navigation.
+  Future<void> sendJourneyAlert({
+    required String userName,
+    required double originLat,
+    required double originLng,
+    String originLabel = '',
+    required double destLat,
+    required double destLng,
+    String destLabel = '',
+    double? safetyScore,
+  }) async {
+    await _api.post('/journey/alert', {
+      'userName': userName,
+      'originLat': originLat,
+      'originLng': originLng,
+      'originLabel': originLabel,
+      'destLat': destLat,
+      'destLng': destLng,
+      'destLabel': destLabel,
+      if (safetyScore != null) 'safetyScore': safetyScore,
+    });
+  }
 
   /// Reverse-geocode a coordinate via the backend. Returns city and area strings.
   Future<Map<String, dynamic>> reverseGeocode(double lat, double lng) async {

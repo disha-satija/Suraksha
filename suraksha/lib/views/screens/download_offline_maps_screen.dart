@@ -10,8 +10,13 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/map_tile_provider.dart';
 import '../../viewmodels/map_viewmodel.dart';
+import '../../viewmodels/safe_spot_viewmodel.dart';
 
 enum _DownloadStage { idle, counting, downloading, done, failed }
+
+/// Bundling the region's verified safe places is a separate step from the tile
+/// download, and is allowed to fail on its own — tiles are still worth keeping.
+enum _SpotsStage { idle, saving, done, failed }
 
 /// Lets the user download the map tiles around a chosen area so the safety map
 /// keeps working with no connection at all.
@@ -41,6 +46,9 @@ class _DownloadOfflineMapsScreenState extends State<DownloadOfflineMapsScreen> {
   String _errorMessage = '';
   StreamSubscription<DownloadProgress>? _progressSub;
   DownloadProgress? _lastProgress;
+
+  _SpotsStage _spotsStage = _SpotsStage.idle;
+  int _safeSpotsSaved = 0;
 
   /// Snapshot of the bounds at the moment "Measure This Area" ran, so a pan
   /// between measuring and downloading can't silently change the region.
@@ -141,6 +149,9 @@ class _DownloadOfflineMapsScreenState extends State<DownloadOfflineMapsScreen> {
             });
           } else {
             setState(() => _stage = _DownloadStage.done);
+            // Tiles alone give you a map with nothing on it. Pull the area's
+            // verified safe places too, while the connection is still up.
+            _cacheSafeSpotsForRegion();
           }
         },
         onError: (Object e) {
@@ -161,6 +172,80 @@ class _DownloadOfflineMapsScreenState extends State<DownloadOfflineMapsScreen> {
         _errorMessage = 'Could not start the download. $e';
       });
     }
+  }
+
+  /// Bundles the region's verified safe places alongside its tiles.
+  ///
+  /// Runs after the tiles are already saved, and never fails the download: a
+  /// map with no safe spots is still a useful map. Zero is a real answer, not
+  /// an error — outside curated coverage there is nothing verified to bundle,
+  /// and the backend deliberately won't substitute AI-suggested places, which
+  /// would be indistinguishable from confirmed ones once cached.
+  Future<void> _cacheSafeSpotsForRegion() async {
+    final bounds = _measuredBounds ?? _visibleBounds;
+    setState(() => _spotsStage = _SpotsStage.saving);
+    try {
+      final count = await context.read<SafeSpotViewModel>().cacheRegionSafeSpots(
+            minLat: bounds.south,
+            minLng: bounds.west,
+            maxLat: bounds.north,
+            maxLng: bounds.east,
+          );
+      if (!mounted) return;
+      setState(() {
+        _safeSpotsSaved = count;
+        _spotsStage = _SpotsStage.done;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('[DownloadOfflineMaps] safe spot bundling failed: $e');
+      setState(() => _spotsStage = _SpotsStage.failed);
+    }
+  }
+
+  /// Reports what happened to the region's safe places, separately from the
+  /// tiles. "None found" is stated plainly rather than dressed up — the user
+  /// should know the map has no safe places on it before they rely on it.
+  Widget _safeSpotStatus() {
+    late final IconData icon;
+    late final Color color;
+    late final String label;
+
+    switch (_spotsStage) {
+      case _SpotsStage.idle:
+      case _SpotsStage.saving:
+        icon = Icons.downloading_rounded;
+        color = AppColors.subtitle;
+        label = 'Saving nearby safe places…';
+      case _SpotsStage.done:
+        if (_safeSpotsSaved > 0) {
+          icon = Icons.shield_rounded;
+          color = AppColors.safeGreen;
+          label = '$_safeSpotsSaved verified safe place'
+              '${_safeSpotsSaved == 1 ? '' : 's'} saved for offline use.';
+        } else {
+          icon = Icons.info_outline_rounded;
+          color = AppColors.warningAmber;
+          label = 'No verified safe places are available for this area yet — '
+              'the map will work offline, but without safe-place markers.';
+        }
+      case _SpotsStage.failed:
+        icon = Icons.cloud_off_rounded;
+        color = AppColors.warningAmber;
+        label = 'Map tiles saved, but safe places could not be downloaded. '
+            'Reopen this screen while online to retry.';
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(label, style: TextStyle(fontSize: 12, color: color, height: 1.4)),
+        ),
+      ],
+    );
   }
 
   Future<void> _cancelDownload() async {
@@ -291,21 +376,28 @@ class _DownloadOfflineMapsScreenState extends State<DownloadOfflineMapsScreen> {
           ],
         );
       case _DownloadStage.done:
-        return const Row(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.check_circle_rounded,
-                size: 20, color: AppColors.safeGreen),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'This area is available offline.',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.safeGreen,
+            const Row(
+              children: [
+                Icon(Icons.check_circle_rounded,
+                    size: 20, color: AppColors.safeGreen),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This area is available offline.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.safeGreen,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
+            const SizedBox(height: 6),
+            _safeSpotStatus(),
           ],
         );
       case _DownloadStage.failed:
