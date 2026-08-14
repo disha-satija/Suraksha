@@ -1,0 +1,51 @@
+{
+  "feature_names": [
+    "lighting_score",
+    "police_station_distance_km",
+    "crowd_density",
+    "crime_count",
+    "time_morning",
+    "time_afternoon",
+    "time_evening",
+    "time_night",
+    "time_late_night",
+    "weather_clear",
+    "weather_rainy",
+    "weather_foggy",
+    "weather_stormy",
+    "weather_humid"
+  ],
+  "numeric_features": [
+    "lighting_score",
+    "police_station_distance_km",
+    "crowd_density",
+    "crime_count"
+  ],
+  "time_categories": [
+    "Morning",
+    "Afternoon",
+    "Evening",
+    "Night",
+    "Late Night"
+  ],
+  "weather_categories": [
+    "Clear",
+    "Rainy",
+    "Foggy",
+    "Stormy",
+    "Humid"
+  ],
+  "scaler_mean": [
+    5.493724999499321,
+    4.116744000507146,
+    505.14805,
+    32.35685
+  ],
+  "scaler_scale": [
+    2.5928888390759224,
+    2.2334841246166905,
+    284.97140809421126,
+    17.145737315073386
+  ],
+  "n_features": 14
+}
